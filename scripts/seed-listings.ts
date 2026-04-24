@@ -27,6 +27,77 @@ import { init } from "@instantdb/admin";
 import "dotenv/config";
 import geohash from "ngeohash";
 import { createHash } from "node:crypto";
+import { SPECIES } from "./species-data";
+
+/**
+ * seasonMonths lookups, built once at startup from the shared species catalog
+ * so both seed scripts stay aligned. Tried in order: latinName → genus → commonName.
+ */
+const SEASON_BY_LATIN = new Map<string, number[]>();
+const SEASON_BY_GENUS = new Map<string, number[]>();
+const SEASON_BY_COMMON = new Map<string, number[]>();
+for (const s of SPECIES) {
+  SEASON_BY_LATIN.set(s.latinName, s.seasonMonths);
+  const genus = s.latinName.split(" ")[0];
+  if (!SEASON_BY_GENUS.has(genus)) SEASON_BY_GENUS.set(genus, s.seasonMonths);
+  SEASON_BY_COMMON.set(s.commonName, s.seasonMonths);
+}
+
+function lookupSeason(latinName?: string, commonName?: string): number[] | undefined {
+  if (latinName && SEASON_BY_LATIN.has(latinName)) return SEASON_BY_LATIN.get(latinName);
+  if (latinName) {
+    const genus = latinName.split(" ")[0];
+    if (SEASON_BY_GENUS.has(genus)) return SEASON_BY_GENUS.get(genus);
+  }
+  if (commonName && SEASON_BY_COMMON.has(commonName)) return SEASON_BY_COMMON.get(commonName);
+  return undefined;
+}
+
+/**
+ * Ripeness on the 0-4 scale based on proximity of `now` to the species'
+ * seasonMonths window (1-12). Circular — December is adjacent to January.
+ *
+ *   in season                 → 3 (ripe)
+ *   1 month before season     → 2 (soon)
+ *   2 months before           → 1 (forming)
+ *   1 month after season ends → 4 (past)
+ *   anything else             → 0 (unripe)
+ *
+ * Falls back to 2 (neutral-approaching) when we have no season data.
+ */
+function computeRipeness(seasonMonths: number[] | undefined, now: Date): number {
+  if (!seasonMonths || seasonMonths.length === 0) return 2;
+  const month = now.getUTCMonth() + 1; // 1-12
+  if (seasonMonths.includes(month)) return 3;
+
+  // Circular distance helper (min of going forward or backward across Dec↔Jan)
+  const circDist = (a: number, b: number) => {
+    const d = Math.abs(a - b);
+    return Math.min(d, 12 - d);
+  };
+
+  // Signed distance: positive = season is ahead, negative = season just passed
+  let nearestDist = Infinity;
+  let nearestBefore = false; // true = season is in the past relative to `now`
+  for (const sm of seasonMonths) {
+    const d = circDist(month, sm);
+    if (d < nearestDist) {
+      nearestDist = d;
+      // If walking forward from month lands on sm in fewer steps, season is ahead
+      const forward = (sm - month + 12) % 12;
+      const backward = (month - sm + 12) % 12;
+      nearestBefore = backward < forward;
+    }
+  }
+
+  if (nearestBefore) {
+    return nearestDist <= 1 ? 4 : 0; // just past → 4, long past → 0 (next cycle)
+  }
+  // Season is ahead
+  if (nearestDist === 1) return 2; // soon
+  if (nearestDist === 2) return 1; // forming
+  return 0;                         // unripe
+}
 
 /**
  * Deterministic UUID derived from a listing's sourceId (e.g. "inat:12345").
@@ -246,6 +317,8 @@ interface PlantPin {
   source: string;
   sourceId: string;
   notes?: string;
+  /** Latin name preserved so we can look up seasonMonths at write time. */
+  latinName?: string;
 }
 
 function fuzz(n: number) {
@@ -298,7 +371,7 @@ async function fetchINat(taxon: Taxon, bbox: [number, number, number, number], m
       const lng = parseFloat(lngStr);
       if (isNaN(lat) || isNaN(lng)) continue;
       const place = obs.place_guess ? ` — ${obs.place_guess}` : "";
-      pins.push({ lat, lng, common: taxon.common, kind: taxon.kind, source: "inat", sourceId: `inat:${obs.id}`, notes: obs.place_guess ?? undefined });
+      pins.push({ lat, lng, common: taxon.common, kind: taxon.kind, source: "inat", sourceId: `inat:${obs.id}`, notes: obs.place_guess ?? undefined, latinName: taxon.name });
     }
 
     if (page * 200 >= Math.min(data.total_results, maxPages * 200)) break;
@@ -353,6 +426,7 @@ async function fetchGBIF(taxon: Taxon, bbox: [number, number, number, number], m
         kind: taxon.kind,
         source: "gbif",
         sourceId: `gbif:${rec.key}`,
+        latinName: taxon.name,
       });
     }
 
@@ -504,6 +578,7 @@ async function fetchSFTrees(bbox: [number, number, number, number]): Promise<Pla
       kind: match?.kind ?? "fruit",
       source: "sf_trees",
       sourceId: `sf:${tree.treeid}`,
+      latinName: speciesRaw,
     });
   }
   return pins;
@@ -548,6 +623,7 @@ async function fetchNYCTrees(bbox: [number, number, number, number]): Promise<Pl
       kind: match.kind,
       source: "nyc_trees",
       sourceId: `nyc:${tree.tree_id}`,
+      latinName: tree.spc_latin,
     });
   }
   return pins;
@@ -586,6 +662,7 @@ async function fetchPortlandTrees(bbox: [number, number, number, number]): Promi
       kind: match.kind,
       source: "portland_trees",
       sourceId: `pdx:${props.TreeID}`,
+      latinName: props.SpeciesName,
     });
   }
   return pins;
@@ -609,9 +686,11 @@ async function writePins(pins: PlantPin[], regionName: string) {
     unique.push(p);
   }
 
+  const now = new Date();
   const txs = unique.map((p) => {
     const lat = fuzz(p.lat);
     const lng = fuzz(p.lng);
+    const season = lookupSeason(p.latinName, p.common);
     // Idempotent: DB id is derived from sourceId, so re-runs upsert
     return db.tx.listings[idForListing(p.sourceId)].update({
       lat,
@@ -621,14 +700,14 @@ async function writePins(pins: PlantPin[], regionName: string) {
       title: `${p.common} — ${regionName}`,
       notes: p.notes,
       accessFlags: { public: true },
-      currentRipeness: 0.5,
+      currentRipeness: computeRipeness(season, now),
       reportCount: 0,
       stillThereScore: 1,
       status: "active",
       source: p.source,
       sourceId: p.sourceId,
-      sourceSyncedAt: new Date(),
-      createdAt: new Date(),
+      sourceSyncedAt: now,
+      createdAt: now,
     });
   });
 
