@@ -23,9 +23,27 @@
  * public. User-submitted community pins use 3 dp (~110m) for privacy.
  */
 
-import { init, id } from "@instantdb/admin";
+import { init } from "@instantdb/admin";
 import "dotenv/config";
 import geohash from "ngeohash";
+import { createHash } from "node:crypto";
+
+/**
+ * Deterministic UUID derived from a listing's sourceId (e.g. "inat:12345").
+ * Same sourceId → same DB ID, so `.update()` becomes an upsert — re-running
+ * the seed (or the weekly GitHub Action) refreshes listings in place instead
+ * of duplicating them.
+ *
+ * Formatted as UUIDv5 per RFC 4122 §4.3 (name-based, SHA-1).
+ */
+function idForListing(sourceId: string): string {
+  const hash = createHash("sha1").update(`forage-listing:${sourceId}`).digest("hex");
+  const b = Buffer.from(hash.slice(0, 32), "hex");
+  b[6] = (b[6] & 0x0f) | 0x50; // version 5
+  b[8] = (b[8] & 0x3f) | 0x80; // variant
+  const h = b.toString("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+}
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -42,6 +60,7 @@ const db = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
 const args = process.argv.slice(2);
 const filterSource = args.includes("--source") ? args[args.indexOf("--source") + 1] : null;
 const filterRegion = args.includes("--region") ? args[args.indexOf("--region") + 1] : null;
+const WIPE_ORPHANS = args.includes("--wipe");
 
 // ── Regions ─────────────────────────────────────────────────────────────────
 // bbox = [south, west, north, east]
@@ -593,7 +612,8 @@ async function writePins(pins: PlantPin[], regionName: string) {
   const txs = unique.map((p) => {
     const lat = fuzz(p.lat);
     const lng = fuzz(p.lng);
-    return db.tx.listings[id()].update({
+    // Idempotent: DB id is derived from sourceId, so re-runs upsert
+    return db.tx.listings[idForListing(p.sourceId)].update({
       lat,
       lng,
       geohash5: geohash.encode(lat, lng, 5),
@@ -618,11 +638,49 @@ async function writePins(pins: PlantPin[], regionName: string) {
   return unique.length;
 }
 
+/**
+ * Wipe open-data listings whose DB id doesn't match the deterministic
+ * scheme for their sourceId. These are leftovers from pre-idempotent
+ * seed runs. Community pins (source="community" or null) are never touched.
+ */
+async function wipeOrphans() {
+  const result = await db.query({ listings: {} }) as {
+    listings?: Array<{ id: string; source?: string | null; sourceId?: string | null }>;
+  };
+  const all = result.listings ?? [];
+
+  const orphans = all.filter((l) => {
+    const src = l.source ?? null;
+    // Never touch community pins or listings without a source
+    if (!src || src === "community") return false;
+    // Orphan if id is not what we'd deterministically generate for its sourceId
+    if (!l.sourceId) return true; // sourced listing with no sourceId → delete, can't re-create cleanly
+    return l.id !== idForListing(l.sourceId);
+  });
+
+  if (orphans.length === 0) {
+    console.log("No orphan listings to wipe.");
+    return;
+  }
+
+  console.log(`Wiping ${orphans.length} orphan listings (pre-idempotent-seed duplicates)…`);
+  const BATCH = 100;
+  for (let i = 0; i < orphans.length; i += BATCH) {
+    const slice = orphans.slice(i, i + BATCH);
+    await db.transact(slice.map((o) => db.tx.listings[o.id].delete()));
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log("Forage for All — multi-source data seed");
   console.log("Sources: iNaturalist · GBIF · OpenStreetMap · Falling Fruit · City trees\n");
+
+  if (WIPE_ORPHANS) {
+    await wipeOrphans();
+    console.log();
+  }
 
   const regions = filterRegion
     ? REGIONS.filter((r) => r.name === filterRegion)
