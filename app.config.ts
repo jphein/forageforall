@@ -1,4 +1,4 @@
-import { ExpoConfig } from "expo/config";
+import type { ExpoConfig } from "expo/config";
 
 /**
  * Expo app config.
@@ -9,6 +9,7 @@ import { ExpoConfig } from "expo/config";
 const config: ExpoConfig = {
   name: "Forage for All",
   slug: "forage-for-all",
+  owner: "kasdf",
   scheme: "forage",
   version: "0.1.0",
   orientation: "portrait",
@@ -76,8 +77,12 @@ const config: ExpoConfig = {
     ],
   ],
   extra: {
-    instantAppId: process.env.INSTANT_APP_ID,
+    instantAppId:
+      process.env.INSTANT_APP_ID ?? "32870e24-647d-452a-ab13-fdaa0a8d8564",
     router: { origin: false },
+    eas: {
+      projectId: "19ec7145-38b0-4627-bf42-7ae7332d44e8",
+    },
   },
 };
 
