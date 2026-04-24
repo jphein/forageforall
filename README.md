@@ -110,7 +110,7 @@ Community pins are the heart, but we also seed the map from open data so you see
 
 **Refresh the map** with `npm run seed:listings` (pulls all sources for every region) or target one: `npm run seed:listings -- --source inat --region "Nevada County, CA"`.
 
-A weekly GitHub Action (`.github/workflows/sync-data.yml`) re-runs the aggregation automatically so the map stays fresh.
+First run of the aggregator seeded **3,198 edible-plant pins for Nevada County, CA** alone — manzanita, toyon, black oak, elderberry, wild grape, plus the expected fruit trees — pulled from iNaturalist and GBIF. A weekly GitHub Action (`.github/workflows/sync-data.yml`) re-runs the aggregation so the map stays fresh.
 
 ---
 

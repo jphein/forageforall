@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Forage for All — a free, open map of food on public land</title>
-  <meta name="description" content="Open-source, privacy-respecting app for mapping fruit trees and edible plants on public land. AGPLv3. No ads, no tracking, no selling your location." />
+  <meta name="description" content="Open-source, privacy-respecting app for mapping fruit trees and edible plants on public land. Seeded from iNaturalist, GBIF, OpenStreetMap. AGPLv3. No ads, no tracking." />
   <meta property="og:title" content="Forage for All" />
-  <meta property="og:description" content="A free, open map of food on public land. AGPLv3. Built by foragers, for foragers." />
+  <meta property="og:description" content="A free, open map of food on public land. 3,000+ edible plants already mapped. AGPLv3, built by foragers, for foragers." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="./og-image.png" />
   <meta name="theme-color" content="#F4EDDC" />
@@ -173,6 +173,41 @@
     .section-head { margin-bottom: 8px; }
     .section-head h2 { font-size: clamp(32px, 4.5vw, 44px); }
     .section-head p { color: var(--inkSoft); font-size: 17px; max-width: 600px; }
+
+    /* ── Data layers ─────────────── */
+    .layers { padding: 100px 0; }
+    .layers-stat {
+      display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+      gap: 8px 24px;
+      font-family: var(--serif);
+      font-size: clamp(22px, 2.4vw, 28px);
+      color: var(--soil);
+      margin: 12px 0 36px;
+      font-weight: 500;
+    }
+    .layers-stat b { color: var(--terra); font-weight: 700; font-style: italic; }
+    .layers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      margin-top: 40px;
+    }
+    .layer-card {
+      background: var(--paper);
+      border: 1px solid var(--lineSoft);
+      border-radius: 14px;
+      padding: 20px 22px;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .layer-swatch {
+      width: 14px; height: 14px; border-radius: 50%;
+      flex: 0 0 14px;
+      margin-top: 6px;
+      box-shadow: 0 0 0 3px var(--cream), 0 0 0 4px var(--lineSoft);
+    }
+    .layer-card h4 { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--soil); margin: 0 0 2px; }
+    .layer-card p { font-size: 13.5px; color: var(--inkSoft); margin: 0; line-height: 1.45; }
+    .layer-card .layer-license { font-size: 12px; color: var(--inkMuted); margin-top: 6px; display: block; }
 
     /* ── How it works ─────────────── */
     .how { padding: 100px 0; }
@@ -343,12 +378,13 @@
         <span>Forage for All</span>
       </a>
       <nav class="links">
+        <a href="#data">Data</a>
         <a href="#how">How it works</a>
         <a href="#values">Values</a>
         <a href="#docs">Docs</a>
         <a href="#faq">FAQ</a>
       </nav>
-      <a href="https://github.com/forage-for-all/app" class="gh-pill">
+      <a href="https://github.com/jphein/forageforall" class="gh-pill">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
         GitHub
       </a>
@@ -362,11 +398,11 @@
       <h1>A free map of food <em>growing around you</em>.</h1>
       <p class="hero-lede">Forage for All is a community-run map of fruit trees, berries, nuts, and edible plants on public land. Drop a pin. Share what's ripe. Eat from your own neighborhood.</p>
       <div class="hero-ctas">
-        <a href="#get" class="btn btn-primary">
-          Get the app
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        <a href="https://github.com/jphein/forageforall/releases/latest" class="btn btn-primary">
+          Download APK (Android)
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v14M5 12l7 7 7-7"/></svg>
         </a>
-        <a href="https://github.com/forage-for-all/app" class="btn btn-secondary">
+        <a href="https://github.com/jphein/forageforall" class="btn btn-secondary">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
           Read the code
         </a>
@@ -457,6 +493,72 @@
     </div>
   </section>
 
+  <!-- DATA LAYERS -->
+  <section id="data" class="layers">
+    <div class="container">
+      <div class="section-head" style="text-align: center;">
+        <h2>The map isn't empty when you open it.</h2>
+      </div>
+      <p class="layers-stat">
+        <span><b>3,198</b> seeded pins in Nevada County, CA.</span>
+        <span>Global coverage via <b>7 open data sources</b>.</span>
+      </p>
+      <p style="text-align: center; color: var(--inkSoft); max-width: 640px; margin: 0 auto 12px;">
+        Every listing carries a <code>source</code> tag. Toggle data layers on and off in the app — each source shows up as its own pin color, with license and attribution.
+      </p>
+      <div class="layers-grid">
+        <div class="layer-card">
+          <span class="layer-swatch" style="background: #4A7C2E;"></span>
+          <div>
+            <h4>Community pins</h4>
+            <p>People dropping pins right now, coordinates fuzzed to ~110m for privacy.</p>
+            <span class="layer-license">AGPLv3 · CC BY-SA 4.0 (data)</span>
+          </div>
+        </div>
+        <div class="layer-card">
+          <span class="layer-swatch" style="background: #B8573A;"></span>
+          <div>
+            <h4>iNaturalist</h4>
+            <p>Research-grade plant observations verified by the iNaturalist community.</p>
+            <span class="layer-license">CC BY-NC 4.0</span>
+          </div>
+        </div>
+        <div class="layer-card">
+          <span class="layer-swatch" style="background: #E8A838;"></span>
+          <div>
+            <h4>GBIF</h4>
+            <p>Scientific occurrence records from the Global Biodiversity Information Facility.</p>
+            <span class="layer-license">CC0 / CC BY 4.0</span>
+          </div>
+        </div>
+        <div class="layer-card">
+          <span class="layer-swatch" style="background: #7A2E4A;"></span>
+          <div>
+            <h4>OpenStreetMap</h4>
+            <p>Fruit and nut trees tagged by OpenStreetMap contributors worldwide.</p>
+            <span class="layer-license">ODbL</span>
+          </div>
+        </div>
+        <div class="layer-card">
+          <span class="layer-swatch" style="background: #6B5440;"></span>
+          <div>
+            <h4>Falling Fruit</h4>
+            <p>Public-land foraging locations from fallingfruit.org.</p>
+            <span class="layer-license">CC BY-SA 4.0</span>
+          </div>
+        </div>
+        <div class="layer-card">
+          <span class="layer-swatch" style="background: #2B8C8C;"></span>
+          <div>
+            <h4>City tree inventories</h4>
+            <p>Edible species from SF DataSF, NYC Street Tree Census, and Portland Maps.</p>
+            <span class="layer-license">PDDL / CC0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- HOW -->
   <section id="how" class="how">
     <div class="container">
@@ -515,6 +617,7 @@
             <li><a href="#get">Install</a></li>
             <li><a href="#setup">Local setup</a></li>
             <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#data">Data sources</a></li>
           </ul>
           <h4>Contribute</h4>
           <ul>
@@ -525,18 +628,19 @@
         </aside>
         <div class="doc-body">
           <h3 id="get">Install the app</h3>
-          <p>iOS and Android builds are open-testing. Join the waitlist while we finalize store review — or build it yourself in 15 minutes from source.</p>
+          <p><strong>Android:</strong> grab the latest preview APK from <a href="https://github.com/jphein/forageforall/releases/latest">GitHub Releases</a>, enable "Install from unknown sources," and tap to install. The build uses the live InstantDB backend — pins you drop are real.</p>
+          <p><strong>iOS:</strong> store build is in progress; simulator bundle is also attached to each release. App Store submission is on the roadmap.</p>
 
           <h3 id="setup">Local setup</h3>
           <p>The whole stack is Expo + InstantDB + Google Maps. You'll need Node 20+, an InstantDB account (free), and a Google Cloud project with Maps SDK enabled.</p>
-          <pre><code>git clone https://github.com/forage-for-all/app
-cd app
+          <pre><code>git clone https://github.com/jphein/forageforall.git
+cd forageforall
 npm install
 cp .env.example .env        <span style="opacity:.5"># fill in INSTANT_APP_ID + Maps keys</span>
 npm run schema:push
 npm run seed:species
-npx expo prebuild --clean
-npm run ios                 <span style="opacity:.5"># or: npm run android</span></code></pre>
+npm run seed:listings       <span style="opacity:.5"># optional: pull open-data pins from iNat, OSM, GBIF</span>
+npx expo start              <span style="opacity:.5"># scan QR with Expo Go, or npm run ios/android</span></code></pre>
           <p>Full instructions — including Google Cloud key restriction, EAS build profiles, and CI — are in the repo's <code>README.md</code>.</p>
 
           <h3 id="architecture">Architecture at a glance</h3>
@@ -596,7 +700,7 @@ npm run ios                 <span style="opacity:.5"># or: npm run android</span
       </details>
       <details class="faq-item">
         <summary>How can I help?</summary>
-        <p>Pin finds in your neighborhood. Confirm other people's pins when you walk by. File issues on GitHub. Add species. Translate. Or <a href="mailto:hello@forageforall.org">email us</a> — we especially need botanists, regional moderators, and iOS/Android developers.</p>
+        <p>Pin finds in your neighborhood. Confirm other people's pins when you walk by. File issues on <a href="https://github.com/jphein/forageforall/issues">GitHub</a>. Add species via a PR. Translate. We especially need botanists, regional moderators, and iOS/Android developers.</p>
       </details>
     </div>
   </section>
@@ -607,11 +711,14 @@ npm run ios                 <span style="opacity:.5"># or: npm run android</span
       <h2>Eat from your own neighborhood.</h2>
       <p>Free app, open code, living map. Start spotting what's been growing around you all along.</p>
       <div class="hero-ctas">
-        <a href="https://github.com/forage-for-all/app" class="btn btn-primary">
+        <a href="https://github.com/jphein/forageforall/releases/latest" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v14M5 12l7 7 7-7"/></svg>
+          Download the APK
+        </a>
+        <a href="https://github.com/jphein/forageforall" class="btn btn-secondary">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
           Clone the repo
         </a>
-        <a href="mailto:hello@forageforall.org" class="btn btn-secondary">Join the waitlist</a>
       </div>
     </div>
   </section>
@@ -620,9 +727,10 @@ npm run ios                 <span style="opacity:.5"># or: npm run android</span
     <div class="container">
       <div>
         <strong style="color: var(--cream);">Forage for All</strong> · AGPLv3 ·
-        <a href="https://github.com/forage-for-all/app">GitHub</a> ·
-        <a href="#">Privacy</a> ·
-        <a href="#">Contribute</a>
+        <a href="https://github.com/jphein/forageforall">GitHub</a> ·
+        <a href="https://github.com/jphein/forageforall/blob/main/PRIVACY.md">Privacy</a> ·
+        <a href="https://github.com/jphein/forageforall/blob/main/CONTRIBUTING.md">Contribute</a> ·
+        <a href="https://github.com/jphein/forageforall/blob/main/FORAGING_ETHICS.md">Ethics</a>
       </div>
       <div class="quote">"Eating is an agricultural act." — Wendell Berry</div>
     </div>
