@@ -29,14 +29,17 @@ export function MapPin({
   ripeness,
   size = 40,
   selected,
+  sourceColor,
 }: {
   kind: string;
   ripeness: Ripeness | number;
   size?: number;
   selected?: boolean;
+  sourceColor?: string;
 }) {
   const glyph = KIND_GLYPH[kind] ?? "🌱";
   const s = selected ? size + 8 : size;
+  const stemColor = sourceColor ?? palette.bark;
   return (
     <View style={[styles.wrap, shadow.floating]}>
       <View style={{ width: s, height: s, alignItems: "center", justifyContent: "center" }}>
@@ -48,7 +51,7 @@ export function MapPin({
       <View
         style={[
           styles.stem,
-          { borderTopColor: palette.bark, borderTopWidth: selected ? 10 : 8 },
+          { borderTopColor: stemColor, borderTopWidth: selected ? 10 : 8 },
         ]}
       />
     </View>

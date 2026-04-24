@@ -15,6 +15,8 @@
     "schema:push": "npx instant-cli@latest push-schema",
     "perms:push": "npx instant-cli@latest push-perms",
     "seed:species": "tsx scripts/seed-species.ts",
+    "seed:listings": "tsx scripts/seed-listings.ts",
+    "sync:listings": "tsx scripts/sync-listings.ts",
     "postinstall": "mkdir -p node_modules/ajv-keywords/node_modules && cp -R node_modules/schema-utils/node_modules/ajv node_modules/ajv-keywords/node_modules/ajv 2>/dev/null || true"
   },
   "dependencies": {
@@ -55,6 +57,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@instantdb/admin": "^1.0.15",
     "@types/ngeohash": "^0.6.8",
     "@types/react": "~18.2.79",
     "eslint": "^8.57.1",

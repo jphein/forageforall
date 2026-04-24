@@ -8,10 +8,16 @@ What we're working on, what's next, what we've said no to. Reality check: this i
 - [x] Species catalog (~60 edibles)
 - [x] Ripeness ring math
 - [x] Fuzzy location defaults
+- [x] Seed map with open OSM/iNaturalist data (multiple cities)
 - [ ] Offline queue for pin creation
 - [ ] Deep links for sharing pins
 - [ ] Spanish translation
-- [ ] First 20 seed pins in launch city
+
+## Store distribution
+
+- [ ] Google Play Store listing (signed AAB, store copy, screenshots, Data Safety form)
+- [ ] Apple App Store listing ($99/yr Apple Developer enrollment required)
+- [ ] TestFlight beta for iOS before public release
 
 ## Near-term (1.x)
 

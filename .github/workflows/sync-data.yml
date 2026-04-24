@@ -1,0 +1,58 @@
+name: Weekly open-data sync
+
+on:
+  # Every Sunday at 06:00 UTC
+  schedule:
+    - cron: "0 6 * * 0"
+  # Manual trigger from Actions tab
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Single source to sync (or blank for all)"
+        required: false
+        type: choice
+        default: ""
+        options:
+          - ""
+          - inat
+          - gbif
+          - osm
+          - fallingfruit
+          - sf_trees
+          - nyc_trees
+          - portland_trees
+      region:
+        description: "Single region (e.g. 'Nevada County, CA') or blank for all"
+        required: false
+        type: string
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sync open-data listings
+        env:
+          INSTANT_APP_ID: ${{ secrets.INSTANT_APP_ID }}
+          INSTANT_ADMIN_TOKEN: ${{ secrets.INSTANT_ADMIN_TOKEN }}
+          FALLING_FRUIT_KEY: ${{ secrets.FALLING_FRUIT_KEY }}
+          INPUT_SOURCE: ${{ inputs.source }}
+          INPUT_REGION: ${{ inputs.region }}
+        run: |
+          ARGS=()
+          if [ -n "$INPUT_SOURCE" ]; then
+            ARGS+=(--source "$INPUT_SOURCE")
+          fi
+          if [ -n "$INPUT_REGION" ]; then
+            ARGS+=(--region "$INPUT_REGION")
+          fi
+          npm run seed:listings -- "${ARGS[@]}"

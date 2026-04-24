@@ -34,6 +34,16 @@ const _schema = i.schema({
       reportCount: i.number(),
       stillThereScore: i.number().optional(),
 
+      // Data provenance — tracks which open data source contributed this pin.
+      // "community" = user-submitted. All others are open dataset imports.
+      // Values: "community" | "inat" | "osm" | "gbif" | "fallingfruit"
+      //         | "sf_trees" | "nyc_trees" | "portland_trees"
+      source: i.string().indexed().optional(),
+      // Original ID from the upstream dataset (for dedup on re-sync)
+      sourceId: i.string().indexed().optional(),
+      // ISO timestamp of last upstream sync (null = never re-synced)
+      sourceSyncedAt: i.date().optional(),
+
       status: i.string().indexed(),
       createdAt: i.date().indexed(),
     }),

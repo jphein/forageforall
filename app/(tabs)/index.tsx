@@ -15,9 +15,12 @@ import { Text } from "../../src/components/Text";
 import { Chip } from "../../src/components/Chip";
 import { MapPin } from "../../src/components/MapPin";
 import { ListingCard } from "../../src/components/ListingCard";
+import { LayerSheet } from "../../src/components/LayerSheet";
 import { useListings, Region } from "../../src/hooks/useListings";
 import { useCurrentLocation } from "../../src/hooks/useCurrentLocation";
+import { useSourceLayers } from "../../src/hooks/useSourceLayers";
 import { MAP_STYLES, MapStyleKey } from "../../src/config/mapStyles";
+import { getSourceColor } from "../../src/config/sourceLayers";
 import { colors, palette, radius, shadow, spacing } from "../../src/theme/tokens";
 import { distanceMeters } from "../../src/lib/geo";
 
@@ -47,6 +50,8 @@ export default function MapScreen() {
   const [ripeNow, setRipeNow] = useState(true);
   const [activeKinds, setActiveKinds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [layersOpen, setLayersOpen] = useState(false);
+  const sourceLayers = useSourceLayers();
 
   // Center on user's location once we have it
   React.useEffect(() => {
@@ -65,6 +70,7 @@ export default function MapScreen() {
   const { listings } = useListings(region, {
     ripeNow,
     kinds: activeKinds.length ? activeKinds : undefined,
+    sources: sourceLayers.hydrated ? sourceLayers.enabled : undefined,
   });
 
   const selected = useMemo(
@@ -115,6 +121,7 @@ export default function MapScreen() {
               kind={l.species?.kind ?? "herb"}
               ripeness={l.currentRipeness ?? 0}
               selected={selectedId === l.id}
+              sourceColor={getSourceColor(l.source)}
             />
           </Marker>
         ))}
@@ -127,6 +134,9 @@ export default function MapScreen() {
           <Text variant="body" muted style={{ marginLeft: 8, flex: 1 }}>
             Search species or places…
           </Text>
+          <Pressable onPress={() => setLayersOpen(true)} hitSlop={10} style={{ marginRight: spacing.sm }}>
+            <Ionicons name="layers-outline" size={20} color={palette.bark} />
+          </Pressable>
           <MapStyleToggle value={mapStyle} onChange={setMapStyle} />
         </View>
 
@@ -176,6 +186,15 @@ export default function MapScreen() {
       ) : null}
 
       <LegendBar />
+
+      <LayerSheet
+        visible={layersOpen}
+        enabled={sourceLayers.enabled}
+        onToggle={sourceLayers.toggle}
+        onEnableAll={sourceLayers.enableAll}
+        onResetDefaults={sourceLayers.resetDefaults}
+        onClose={() => setLayersOpen(false)}
+      />
     </View>
   );
 }

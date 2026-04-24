@@ -20,6 +20,7 @@ export type ListingFilter = {
   ripeNow?: boolean;
   kinds?: string[];
   inSeason?: number; // month 1..12
+  sources?: string[]; // e.g. ["community", "inat", "osm"] — empty = show all
 };
 
 export function useListings(region: Region | null, filter: ListingFilter = {}) {
@@ -68,8 +69,14 @@ export function useListings(region: Region | null, filter: ListingFilter = {}) {
           : false,
       );
     }
+    if (filter.sources?.length) {
+      out = out.filter((l) => {
+        const src = l.source ?? "community";
+        return filter.sources!.includes(src);
+      });
+    }
     return out;
-  }, [listings, filter.kinds, filter.inSeason]);
+  }, [listings, filter.kinds, filter.inSeason, filter.sources]);
 
   return { listings: filtered, isLoading, error };
 }
