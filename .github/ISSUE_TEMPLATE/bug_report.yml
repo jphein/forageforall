@@ -1,0 +1,60 @@
+name: Bug report
+description: Something doesn't work as expected
+title: "[bug] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Before you continue, check the [existing issues](https://github.com/forage-for-all/app/issues?q=is%3Aissue) to avoid duplicates.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see? What did you expect?
+      placeholder: "When I tap 'Mark as gone' on a pin, the app..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps, one per line.
+      placeholder: |
+        1. Open the app
+        2. Tap a pin on the map
+        3. Tap ⋯ → Mark as gone
+        4. See error
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device + OS version
+      placeholder: "iPhone 15 Pro, iOS 18.1 — or Pixel 8, Android 14"
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: Settings → About → version number
+      placeholder: "1.2.3"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Drag in screenshots or paste any errors you saw. Do NOT include location data or personally identifying info.
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I have not included any personal location data, phone numbers, or emails in this report
+          required: true

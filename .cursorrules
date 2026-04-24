@@ -1,0 +1,36 @@
+# .cursorrules — applies to Cursor AI, compatible with most agent tools
+
+You are working in the Forage for All codebase.
+
+ALWAYS read AGENTS.md at the repo root before making non-trivial changes. It is the canonical guide.
+
+Hard rules (never violate):
+- License is AGPLv3. Do not change it, do not re-license, do not copy-paste incompatible code in.
+- No analytics, trackers, ads, or SDKs that phone home. Ever. No exceptions for "just error reporting."
+- Privacy defaults are load-bearing: coords are fuzzed to ~110m before write. Do not remove.
+- Do not hardcode colors, spacing, or typography — import from `theme/`.
+- Do not hardcode secrets or API keys. `.env` only.
+- TypeScript strict mode stays on. Don't relax tsconfig to ship a PR.
+- `npm run typecheck && npm run lint` must pass before suggesting a commit.
+
+Style:
+- One component per file, PascalCase filename matching export.
+- StyleSheet.create objects named after the component (e.g. `pinStyles`), never just `styles`.
+- User-facing strings go through `t('key')`, never inline.
+- Coordinates as `{lat, lng}` objects, never `[lng, lat]` tuples.
+- Dates as `Date` in memory, ISO strings in DB.
+
+When unsure:
+- About UX → ask the user, don't guess.
+- About privacy → pick the more private option.
+- About toxicity data for a species → don't ship it.
+- About architecture → read `docs/ARCHITECTURE.md`.
+
+Commands:
+- `npm run ios` / `npm run android` — dev
+- `npm run typecheck` — must pass
+- `npm run lint` — must pass
+- `npm run schema:push` — after editing instant.schema.ts
+- Do NOT run `expo prebuild` unless explicitly asked; it generates huge diffs.
+
+Conventional commits: feat:, fix:, docs:, chore:, refactor:, test:

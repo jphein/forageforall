@@ -1,0 +1,59 @@
+name: Feature request
+description: Suggest an idea or improvement
+title: "[feat] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We're small and volunteer-run. Well-scoped proposals get merged. Vague wishlists sit in the backlog.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Start with the user problem, not the solution.
+      placeholder: "When I'm walking and see a fruit tree, I want to pin it without taking off my gloves..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Sketch the UX. Screenshots, Figma, or words all fine.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Why not other approaches?
+
+  - type: checkboxes
+    id: values
+    attributes:
+      label: Alignment with project values
+      description: All must be checked for the feature to be considered.
+      options:
+        - label: This does not require adding analytics, trackers, or ads
+          required: true
+        - label: This does not weaken location-privacy defaults
+          required: true
+        - label: This does not require a paid third-party service beyond our current stack
+          required: true
+        - label: This is compatible with AGPLv3
+          required: true
+
+  - type: dropdown
+    id: help
+    attributes:
+      label: Would you help build this?
+      options:
+        - "Yes, I can code it"
+        - "Yes, I can design it"
+        - "Yes, I can test it"
+        - "No, just suggesting"
+    validations:
+      required: true

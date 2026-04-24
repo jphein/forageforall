@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test --if-present
+
+      - name: Check for banned dependencies
+        run: |
+          # Fail if anyone sneaks in analytics/tracker SDKs
+          banned="firebase @sentry/react-native amplitude-js mixpanel-browser @segment/analytics-react-native posthog-react-native @react-native-firebase/analytics"
+          for pkg in $banned; do
+            if grep -q "\"$pkg\"" package.json; then
+              echo "❌ Banned dependency: $pkg"
+              echo "See CONTRIBUTING.md — we don't ship analytics/trackers."
+              exit 1
+            fi
+          done
+          echo "✓ No banned dependencies"
+
+      - name: Check for hardcoded secrets
+        run: |
+          # Rough check — real secret scanning is on the GitHub side
+          if grep -rE "AIza[0-9A-Za-z_-]{35}" --include="*.ts" --include="*.tsx" --include="*.js" --exclude-dir=node_modules .; then
+            echo "❌ Possible Google API key committed"
+            exit 1
+          fi
+          echo "✓ No obvious hardcoded keys"

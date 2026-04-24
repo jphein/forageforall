@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck + lint
+        run: |
+          npm run typecheck
+          npm run lint
+
+      - name: Generate changelog section
+        id: changelog
+        run: |
+          # Pull the section for this tag out of CHANGELOG.md
+          tag=${GITHUB_REF#refs/tags/}
+          version=${tag#v}
+          awk -v v="$version" '
+            /^## \['"$version"'\]/ { flag=1; next }
+            /^## \[/ && flag { exit }
+            flag { print }
+          ' CHANGELOG.md > release-notes.md
+          echo "notes_file=release-notes.md" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+
+  # EAS build disabled until an Expo account + EXPO_TOKEN secret are configured.
+  # Uncomment when ready:
+  #
+  # build:
+  #   needs: release
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with: { node-version: 20 }
+  #     - uses: expo/expo-github-action@v8
+  #       with:
+  #         eas-version: latest
+  #         token: ${{ secrets.EXPO_TOKEN }}
+  #     - run: npm ci
+  #     - run: eas build --platform all --profile production --non-interactive
+  #     - run: eas submit --platform all --profile production --non-interactive

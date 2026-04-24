@@ -1,0 +1,70 @@
+name: Species suggestion
+description: Propose a species for the catalog
+title: "[species] "
+labels: ["species", "triage"]
+body:
+  - type: input
+    id: common
+    attributes:
+      label: Common name
+      placeholder: "European Plum"
+    validations:
+      required: true
+
+  - type: input
+    id: latin
+    attributes:
+      label: Latin name
+      placeholder: "Prunus domestica"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options: [fruit, berry, nut, green, herb, mushroom, flower]
+    validations:
+      required: true
+
+  - type: input
+    id: season
+    attributes:
+      label: Seasonal window (months 1-12)
+      placeholder: "7-9 (July to September)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: toxicity
+    attributes:
+      label: Toxicity / hazards
+      description: Any parts not safe to eat? Cooking required? Allergens?
+      placeholder: "Pits contain cyanogenic compounds — do not chew or grind seeds."
+
+  - type: textarea
+    id: lookalikes
+    attributes:
+      label: Toxic look-alikes
+      description: List any species this could be confused with.
+
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: At least one authoritative reference (GBIF, iNaturalist, USDA PLANTS, peer-reviewed field guide).
+      placeholder: |
+        - GBIF: https://www.gbif.org/species/3022126
+        - USDA PLANTS: https://plants.usda.gov/home/plantProfile?symbol=PRDO
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have personally identified this species OR my sources are authoritative
+          required: true
+        - label: I am not pinning a rare, protected, or overharvested species
+          required: true
