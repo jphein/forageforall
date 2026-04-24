@@ -108,10 +108,48 @@ export default function MapScreen() {
         showsMyLocationButton={false}
         clusterColor={palette.moss}
         clusterTextColor={palette.cream}
+        renderCluster={(cluster: any) => {
+          // Cluster color = average ripeness of the pins *near* this cluster's
+          // centroid (approximated from the current viewport's listings).
+          // Gives zoomed-out views a useful "what's ripe around here" gradient.
+          const { id, geometry, onPress, properties } = cluster;
+          const points = properties?.point_count ?? 0;
+          const [lng, lat] = geometry.coordinates;
+
+          // Find the N closest listings to the cluster centroid and average.
+          const ranked = listings
+            .map((l: any) => {
+              const dy = l.lat - lat;
+              const dx = l.lng - lng;
+              return { l, d2: dy * dy + dx * dx };
+            })
+            .sort((a, b) => a.d2 - b.d2)
+            .slice(0, Math.max(1, points));
+
+          const sum = ranked.reduce((s: number, x) => s + (x.l.currentRipeness ?? 0), 0);
+          const avg = sum / ranked.length;
+          const bucket = Math.max(0, Math.min(4, Math.round(avg))) as 0 | 1 | 2 | 3 | 4;
+          const color = palette.ripeness[bucket];
+
+          return (
+            <Marker
+              key={`cluster-${id}-${bucket}`}
+              coordinate={{ latitude: lat, longitude: lng }}
+              onPress={onPress}
+              tracksViewChanges={false}
+            >
+              <View style={[styles.clusterBubble, { backgroundColor: color }]}>
+                <Text style={styles.clusterLabel}>{points}</Text>
+              </View>
+            </Marker>
+          );
+        }}
       >
         {listings.map((l: any) => (
           <Marker
-            key={l.id}
+            // Key includes rounded ripeness so React remounts the marker when
+            // ripeness changes (react-native-maps otherwise caches view).
+            key={`${l.id}-${Math.round(l.currentRipeness ?? 0)}`}
             coordinate={{ latitude: l.lat, longitude: l.lng }}
             onPress={() => setSelectedId(l.id)}
             tracksViewChanges={false}
@@ -274,5 +312,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
+  },
+  clusterBubble: {
+    minWidth: 36,
+    height: 36,
+    borderRadius: 18,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: palette.cream,
+    ...shadow.floating,
+  },
+  clusterLabel: {
+    color: palette.cream,
+    fontSize: 13,
+    fontWeight: "700",
+    fontFamily: undefined,
   },
 });
