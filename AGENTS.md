@@ -102,23 +102,24 @@ Reject your own PR before a human has to:
 
 ## How to add a species to the catalog
 
-Edit `scripts/seed-species.ts`. Required fields:
+Edit `scripts/seed-species.ts`. Fields (match `src/db/schema.ts :: species`):
 
 ```ts
 {
-  id: 'prunus-domestica',            // kebab-case latin
-  common: 'European Plum',
-  latin: 'Prunus domestica',
-  category: 'fruit',                  // fruit | berry | nut | green | herb | mushroom | flower
-  emoji: '🍑',                         // fallback icon — designer will replace with SVG
-  season: { start: 7, end: 9 },       // months 1-12
-  toxicity: 'pit-cyanogenic',         // null | short code (see lib/toxicity.ts)
-  lookalikes: ['prunus-cerasifera'],  // ids of similar species
-  sources: ['gbif:3022126'],          // authoritative references
+  commonName: "European Plum",
+  latinName: "Prunus domestica",          // used as natural key — seed IDs are SHA-1 of this
+  kind: "stone",                          // apple | pear | stone | citrus | fig | berry
+                                          //  | grape | nut | herb | veg | flower | mushroom
+  seasonMonths: [7, 8, 9],                // 1-12
+  description: "Short edible-use note.",  // optional
+  isToxic: false,                         // optional, flag raw-toxic species (e.g. elderberry)
+  lookAlikes: ["Virginia creeper (TOXIC) has 5-leaflet…"],  // free-form warnings
 }
 ```
 
-**You must cite a source.** Uncited species get reverted.
+**You must cite a source in the commit message** (GBIF ID, iNat link, regional field guide). Uncited species get reverted.
+
+The seed is **idempotent** — IDs are SHA-1 hashes of `latinName`, so re-runs upsert rather than duplicating. To also remove any orphans from pre-idempotent seeds, run `npm run seed:species -- --wipe` (one-time cleanup).
 
 ## Testing approach
 

@@ -7,12 +7,19 @@
  * (manzanita, toyon, oak acorns, pine nuts, bay laurel, etc.) that the
  * open-data aggregator in seed-listings.ts imports against.
  *
+ * IDEMPOTENT: IDs are deterministic SHA-1 hashes of latinName, so
+ * re-running the seed upserts instead of duplicating.
+ *
+ * On first run with `--wipe`, any orphan species from prior non-idempotent
+ * seeds are deleted first so the catalog is clean.
+ *
  * Extend freely — pull latin names from GBIF, seasonality from local sources.
  * Critical: always add toxicity / look-alike warnings for anything non-obvious.
  */
 
-import { init, id } from "@instantdb/admin";
+import { init } from "@instantdb/admin";
 import "dotenv/config";
+import { createHash } from "node:crypto";
 
 const appId = process.env.INSTANT_APP_ID;
 const adminToken = process.env.INSTANT_ADMIN_TOKEN;
@@ -26,6 +33,23 @@ if (!adminToken) {
 }
 
 const db = init({ appId, adminToken });
+const WIPE_ORPHANS = process.argv.includes("--wipe");
+
+/**
+ * Deterministic UUID derived from latinName via SHA-1.
+ * Same latin name → same ID, so db.tx.species[id].update(...) becomes
+ * an upsert that never duplicates on re-run.
+ * Formatted as UUIDv5 per RFC 4122 §4.3 (name-based, SHA-1).
+ */
+function idForSpecies(latinName: string): string {
+  const hash = createHash("sha1").update(`forage-species:${latinName}`).digest("hex");
+  // Mask version (v5) + variant bits per UUIDv5 spec
+  const b = Buffer.from(hash.slice(0, 32), "hex");
+  b[6] = (b[6] & 0x0f) | 0x50; // version 5
+  b[8] = (b[8] & 0x3f) | 0x80; // variant
+  const h = b.toString("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+}
 
 type Seed = {
   commonName: string;
@@ -147,10 +171,38 @@ const SPECIES: Seed[] = [
   { commonName: "California Rose Hips", latinName: "Rosa californica", kind: "flower", seasonMonths: [9, 10, 11, 12], description: "Native California wild rose. Hips (fruits) are bright red-orange, rich in vitamin C. Strain out the hairs inside; they're the historic \"itching powder.\"" },
 ];
 
+async function wipeOrphans() {
+  const canonicalIds = new Set(SPECIES.map((s) => idForSpecies(s.latinName)));
+  const result = await db.query({ species: {} }) as { species?: Array<{ id: string; latinName?: string }> };
+  const existing = result.species ?? [];
+  const orphans = existing.filter((s) => !canonicalIds.has(s.id));
+
+  if (orphans.length === 0) {
+    console.log("No orphan species to wipe.");
+    return;
+  }
+
+  console.log(`Wiping ${orphans.length} orphan species (pre-idempotent-seed duplicates)…`);
+  const BATCH = 100;
+  for (let i = 0; i < orphans.length; i += BATCH) {
+    const slice = orphans.slice(i, i + BATCH);
+    await db.transact(slice.map((o) => db.tx.species[o.id].delete()));
+  }
+}
+
 async function main() {
-  console.log(`Seeding ${SPECIES.length} species…`);
-  const txs = SPECIES.map((s) => db.tx.species[id()].update(s));
-  await db.transact(txs);
+  if (WIPE_ORPHANS) {
+    await wipeOrphans();
+  }
+
+  console.log(`Seeding ${SPECIES.length} species (idempotent — re-runs upsert)…`);
+  const txs = SPECIES.map((s) => db.tx.species[idForSpecies(s.latinName)].update(s));
+
+  const BATCH = 100;
+  for (let i = 0; i < txs.length; i += BATCH) {
+    await db.transact(txs.slice(i, i + BATCH));
+  }
+
   console.log("Done.");
   process.exit(0);
 }
