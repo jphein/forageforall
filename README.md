@@ -61,7 +61,7 @@ nvm use
 npm install
 cp .env.example .env        # fill in INSTANT_APP_ID + Google Maps keys
 npm run schema:push         # create DB entities in your InstantDB app
-npm run seed:species        # load ~60 common edibles into the catalog
+npm run seed:species        # load ~85 edibles (worldwide + Sierra Nevada natives)
 npm run seed:listings       # (optional) aggregate open-data pins from iNaturalist + OSM + GBIF
 npx expo start              # scan QR with Expo Go to run on your phone
 ```
@@ -144,7 +144,7 @@ forageforall/
 ├── assets/                     # Icon, splash, adaptive icon
 ├── docs/                       # GitHub Pages site (static HTML, no build step)
 ├── scripts/
-│   ├── seed-species.ts         # Seeds ~60 edibles into the catalog
+│   ├── seed-species.ts         # Seeds ~85 edibles (incl. Sierra Nevada natives) into the catalog
 │   ├── seed-listings.ts        # Aggregates listings from iNat + GBIF + OSM + city datasets
 │   └── sync-listings.ts        # Refreshes stale open-data listings per-source
 ├── instant.schema.ts           # Re-exports src/db/schema for the Instant CLI

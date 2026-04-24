@@ -50,7 +50,7 @@ EXPO_PUBLIC_GOOGLE_MAPS_ANDROID=<restricted android key>
 
 ```bash
 npm run schema:push     # creates entities in your InstantDB app
-npm run seed:species    # loads ~60 common edibles into the catalog
+npm run seed:species    # loads ~85 edibles (worldwide + Sierra Nevada natives)
 ```
 
 ## Run the app

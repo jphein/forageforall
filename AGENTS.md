@@ -38,7 +38,7 @@ src/
   theme/
     tokens.ts               Colors, type scale, spacing — SINGLE SOURCE OF TRUTH
 scripts/
-  seed-species.ts           Seed ~60 edible species into the catalog
+  seed-species.ts           Seed ~85 edible species into the catalog
   seed-listings.ts          Aggregate open-data pins from iNat/GBIF/OSM/city datasets
   sync-listings.ts          Refresh stale open-data listings per-source
 instant.schema.ts           ← the DB shape. If you change this, run `npm run schema:push`.
@@ -55,7 +55,7 @@ npm run android        # start Android emulator
 npm run typecheck      # tsc --noEmit — run before committing
 npm run lint           # eslint — run before committing
 npm run schema:push    # push instant.schema.ts to InstantDB
-npm run seed:species   # one-time seed of ~60 species
+npm run seed:species   # one-time seed of ~85 species
 ```
 
 If `npm run typecheck` or `npm run lint` fails, **do not commit**. Fix it or surface it.

@@ -2,20 +2,30 @@
  * Seed species — run after schema push:
  *   npm run seed:species
  *
- * Adds ~60 common edibles. Extend freely — pull from GBIF for latin names.
+ * Adds the full Forage for All catalog (~85 edibles), covering common
+ * worldwide fruits/nuts/berries plus Sierra Nevada + California natives
+ * (manzanita, toyon, oak acorns, pine nuts, bay laurel, etc.) that the
+ * open-data aggregator in seed-listings.ts imports against.
+ *
+ * Extend freely — pull latin names from GBIF, seasonality from local sources.
+ * Critical: always add toxicity / look-alike warnings for anything non-obvious.
  */
 
-import { init, id } from "@instantdb/react-native";
+import { init, id } from "@instantdb/admin";
 import "dotenv/config";
-import schema from "../src/db/schema";
 
 const appId = process.env.INSTANT_APP_ID;
+const adminToken = process.env.INSTANT_ADMIN_TOKEN;
 if (!appId) {
   console.error("Set INSTANT_APP_ID in .env");
   process.exit(1);
 }
+if (!adminToken) {
+  console.error("Set INSTANT_ADMIN_TOKEN in .env (InstantDB dashboard → App → Admin token).");
+  process.exit(1);
+}
 
-const db = init({ appId, schema });
+const db = init({ appId, adminToken });
 
 type Seed = {
   commonName: string;
@@ -89,6 +99,52 @@ const SPECIES: Seed[] = [
   { commonName: "Prickly Pear", latinName: "Opuntia ficus-indica", kind: "veg", seasonMonths: [8, 9, 10] },
   { commonName: "Wild Asparagus", latinName: "Asparagus officinalis", kind: "veg", seasonMonths: [4, 5] },
   { commonName: "Fiddleheads", latinName: "Matteuccia struthiopteris", kind: "veg", seasonMonths: [4, 5], description: "Must cook. Only ostrich fern fiddleheads." },
+
+  // ── Mulberry variants ─────────────────────────────────────────
+  { commonName: "White Mulberry", latinName: "Morus alba", kind: "berry", seasonMonths: [5, 6, 7], description: "Sweet but often mild. Heavy bearer — trees drop fruit in piles. Unripe berries and raw leaves mildly hallucinogenic; stick to ripe fruit." },
+  { commonName: "Black Mulberry", latinName: "Morus nigra", kind: "berry", seasonMonths: [6, 7, 8], description: "Darker, richer flavor than white mulberry. Stains everything." },
+
+  // ── Stone fruit variants ──────────────────────────────────────
+  { commonName: "Cherry Plum", latinName: "Prunus cerasifera", kind: "stone", seasonMonths: [6, 7, 8], description: "Small tart plums, often red or yellow. Common as ornamental street tree — plenty of windfall.", lookAlikes: ["Pit is cyanogenic like all Prunus — don't eat the pit or damaged kernels."] },
+
+  // ── Elderberry variants — cook before eating, raw causes nausea
+  { commonName: "Blue Elderberry", latinName: "Sambucus mexicana", kind: "berry", seasonMonths: [8, 9, 10], description: "Sierra + California native. Dusty-blue clusters. Must cook — raw causes nausea. Leaves, stems, and roots are toxic.", lookAlikes: ["Water hemlock looks somewhat similar in flower; always confirm by purple-black berries and pinnate compound leaves."] },
+  { commonName: "Red Elderberry", latinName: "Sambucus racemosa", kind: "berry", seasonMonths: [6, 7, 8], description: "Red berries require thorough cooking; some sources recommend avoiding altogether. Seeds are particularly toxic.", isToxic: true, lookAlikes: ["Best avoided unless you know a tested recipe. Stick to Blue/Black elderberry if unsure."] },
+
+  // ── Currants / gooseberries ───────────────────────────────────
+  { commonName: "California Gooseberry", latinName: "Ribes californicum", kind: "berry", seasonMonths: [5, 6, 7], description: "Spined fruit of California chaparral. Ripe berries are dark purple; remove the spines by roasting briefly or rolling in sand." },
+  { commonName: "Sierra Currant", latinName: "Ribes nevadense", kind: "berry", seasonMonths: [7, 8], description: "Bright pink flowers then dusty black berries. Middle/upper elevation Sierra." },
+  { commonName: "Red Flowering Currant", latinName: "Ribes sanguineum", kind: "berry", seasonMonths: [6, 7, 8], description: "Pacific NW and Northern CA native. Edible but dry and seedy — better for jelly than fresh eating." },
+
+  // ── Berries — Pacific / Sierra natives ────────────────────────
+  { commonName: "Beach Strawberry", latinName: "Fragaria chiloensis", kind: "berry", seasonMonths: [5, 6, 7], description: "Small wild strawberry of coastal dunes and meadows. Intense flavor; parent species of commercial strawberries." },
+  { commonName: "California Blackberry", latinName: "Rubus ursinus", kind: "berry", seasonMonths: [6, 7, 8], description: "Native trailing bramble with smaller thorns than Himalayan. Berries are smaller and more tart than commercial cultivars." },
+  { commonName: "Saskatoon Serviceberry", latinName: "Amelanchier alnifolia", kind: "berry", seasonMonths: [6, 7, 8], description: "Blueberry-like flavor with a hint of almond. Ripens purple-black and slightly soft. Widespread from AK to CA." },
+  { commonName: "Manzanita", latinName: "Arctostaphylos manzanita", kind: "berry", seasonMonths: [7, 8, 9], description: "Smooth red bark, dusty berries used for cider by Indigenous peoples. Soak and grind — tannins make them chalky raw.", lookAlikes: ["Many Arctostaphylos species; all known species are edible but differ in palatability."] },
+  { commonName: "Kinnikinnick", latinName: "Arctostaphylos uva-ursi", kind: "berry", seasonMonths: [8, 9], description: "Low-growing groundcover form of manzanita, circumboreal. Mealy but edible raw; better cooked. Traditional smoked-leaf use.", lookAlikes: ["Salal and other low-growing berries; confirm by reddish bark and paired leaves."] },
+  { commonName: "Toyon", latinName: "Heteromeles arbutifolia", kind: "berry", seasonMonths: [11, 12, 1], description: "California's \"Christmas berry.\" Red clusters bright through winter. Raw berries contain cyanogenic compounds — must cook, dry, or freeze; Indigenous people traditionally parch them.", isToxic: true, lookAlikes: ["Holly (non-edible) has similar look but glossier leaves and fewer berries per cluster."] },
+
+  // ── Grapes ────────────────────────────────────────────────────
+  { commonName: "California Wild Grape", latinName: "Vitis californica", kind: "grape", seasonMonths: [8, 9, 10], description: "Native climber along streams. Smaller, seedier, more tart than cultivated grapes. Excellent for jelly.", lookAlikes: ["Virginia creeper (TOXIC) has 5-leaflet compound leaves versus grape's simple lobed leaf."] },
+  { commonName: "Fox Grape", latinName: "Vitis labrusca", kind: "grape", seasonMonths: [8, 9, 10], description: "Eastern US wild grape; Concord's ancestor. Thick-skinned, musky-sweet. Good fresh or for juice.", lookAlikes: ["Virginia creeper and moonseed (TOXIC) — moonseed berries have a crescent-shaped seed instead of grape's 2-4 pear-shaped seeds."] },
+
+  // ── Oaks (acorns) — ALL require tannin leaching ──────────────
+  { commonName: "Black Oak (acorns)", latinName: "Quercus kelloggii", kind: "nut", seasonMonths: [9, 10, 11], description: "Sierra + foothills keystone food. Acorns must be shelled and cold-leached in running water for 2+ days (or hot-leached with multiple water changes) to remove bitter tannins before eating.", lookAlikes: ["All Quercus acorns are edible after leaching, but California buckeye (Aesculus californica) is highly toxic — buckeye has a single large seed without a cup."] },
+  { commonName: "Oregon White Oak (acorns)", latinName: "Quercus garryana", kind: "nut", seasonMonths: [9, 10, 11], description: "PNW white oak — acorns are less bitter than black oak but still need leaching. Traditional Kalapuya and other Indigenous food.", lookAlikes: ["California buckeye is highly toxic and lacks an acorn cup."] },
+  { commonName: "Valley Oak (acorns)", latinName: "Quercus lobata", kind: "nut", seasonMonths: [9, 10, 11], description: "California's largest oak. Long, slender acorns — less tannic than black oak but still require leaching.", lookAlikes: ["California buckeye is toxic."] },
+  { commonName: "Coast Live Oak (acorns)", latinName: "Quercus agrifolia", kind: "nut", seasonMonths: [10, 11, 12], description: "Evergreen coastal California oak. Smaller acorns, relatively high tannins — leach thoroughly.", lookAlikes: ["California buckeye is toxic."] },
+
+  // ── Pine nuts — pitch can contaminate, cones must be dried ───
+  { commonName: "Grey Pine (pine nuts)", latinName: "Pinus sabiniana", kind: "nut", seasonMonths: [9, 10, 11], description: "Also called Foothill or Digger Pine. Sierra foothill native. Cones are massive and produce large, oily seeds — a keystone food for Indigenous peoples. Shell after cones dry and open." },
+  { commonName: "Sugar Pine (pine nuts)", latinName: "Pinus lambertiana", kind: "nut", seasonMonths: [9, 10, 11], description: "World's largest pine cones (up to 60cm). High-elevation Sierra. Seeds are large and oily but harder to reach." },
+  { commonName: "Pinyon Pine (pine nuts)", latinName: "Pinus edulis", kind: "nut", seasonMonths: [9, 10, 11], description: "Great Basin and SW US. Small but rich seeds — traditional food across many Indigenous nations. Best harvested as cones crack open in autumn." },
+
+  // ── Herbs / greens ────────────────────────────────────────────
+  { commonName: "Three-cornered Leek", latinName: "Allium triquetrum", kind: "herb", seasonMonths: [2, 3, 4, 5], description: "Mediterranean wild garlic, now widespread in CA and UK. Three-angled stem, nodding white flowers. Strong garlicky flavor.", lookAlikes: ["All parts smell of garlic/onion — if it doesn't smell like an allium, don't eat it. Death camas and similar bulb plants lack the smell and are fatally toxic."] },
+  { commonName: "California Bay Laurel", latinName: "Umbellularia californica", kind: "herb", seasonMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], description: "West coast native evergreen. Leaves are stronger than Mediterranean bay — use about 1/4 to 1/3 the quantity in cooking. Nuts (bay nuts) are edible roasted and bean-like in flavor.", lookAlikes: ["Volatile oils can cause headaches in sensitive people; start with a pinch. Don't confuse with toxic mountain laurel (Kalmia)."] },
+
+  // ── Rose hips (California native) ─────────────────────────────
+  { commonName: "California Rose Hips", latinName: "Rosa californica", kind: "flower", seasonMonths: [9, 10, 11, 12], description: "Native California wild rose. Hips (fruits) are bright red-orange, rich in vitamin C. Strain out the hairs inside; they're the historic \"itching powder.\"" },
 ];
 
 async function main() {

@@ -22,7 +22,7 @@ First public preview. Everything you need to try the app and start dropping pins
 - `source`-tagged listings render as toggleable map layers with per-source pin colors
 - Open-data aggregator `npm run seed:listings` pulls from iNaturalist, GBIF, OpenStreetMap, Falling Fruit, and SF/NYC/Portland street-tree inventories
 - Weekly GitHub Action re-syncs stale open-data pins
-- Seed catalog of ~60 common edibles + Sierra Nevada natives (manzanita, toyon, oaks, elderberry)
+- Seed catalog of ~85 edibles — worldwide staples plus Sierra Nevada + California natives (manzanita, toyon, oaks, elderberry, bay laurel, pine nuts)
 - Nevada County, CA seeded with 3,198 iNaturalist + GBIF pins on first run
 
 ### Builds

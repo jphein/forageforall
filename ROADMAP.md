@@ -5,7 +5,7 @@ What we're working on, what's next, what we've said no to. Reality check: this i
 ## Shipping soon (0.x)
 
 - [x] Core map + pin flow
-- [x] Species catalog (~60 edibles)
+- [x] Species catalog (~85 edibles, incl. Sierra Nevada + California natives)
 - [x] Ripeness ring math
 - [x] Fuzzy location defaults
 - [x] Seed map with open OSM/iNaturalist data (multiple cities)
