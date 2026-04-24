@@ -12,9 +12,7 @@ Drop a pin. Share what's ripe. Eat from your own neighborhood.
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-E8A838.svg?style=flat-square)](./CONTRIBUTING.md)
 [![Platform](https://img.shields.io/badge/iOS%20%7C%20Android-supported-6B5440.svg?style=flat-square)](#install)
 
-[**Website**](https://forage-for-all.github.io/app) · [**Docs**](./docs) · [**Roadmap**](https://github.com/forage-for-all/app/projects) · [**Discord**](#) · [**Ethics**](./FORAGING_ETHICS.md)
-
-<img src="./docs/og-image.png" alt="Forage for All" width="720"/>
+[**Website**](https://jphein.github.io/forageforall/) · [**Docs**](./docs) · [**Roadmap**](./ROADMAP.md) · [**Ethics**](./FORAGING_ETHICS.md)
 
 </div>
 
@@ -22,9 +20,9 @@ Drop a pin. Share what's ripe. Eat from your own neighborhood.
 
 ## What this is
 
-A community-run map of fruit trees, berries, nuts, greens, and other edible plants growing on **public land** — street trees, parks, abandoned lots, trailsides, shared fencelines. Pins have photos, species, seasonality, and a **ripeness ring** that fills as the season progresses and other people confirm.
+A community-run map of fruit trees, berries, nuts, greens, and other edible plants growing on **public land** — street trees, parks, abandoned lots, trailsides, shared fencelines.
 
-No ads. No analytics. No selling your location. Ever.
+Every pin has photos, species info, and a **ripeness ring** that fills as the season progresses and other people confirm. No ads. No analytics. No selling your location. Ever.
 
 ## Why it exists
 
@@ -43,60 +41,114 @@ Billions of pounds of fruit fall to sidewalks every year while people buy the sa
 
 ## Install
 
-**Users:** iOS + Android coming to the stores. Join the waitlist at [forageforall.org](#), or build from source below.
+### Try it now (Android)
 
-**Developers:** 15 minutes from clone to running simulator.
+A preview APK is available via [EAS](https://expo.dev/accounts/kasdf/projects/forage-for-all/builds). Download it, enable "Install from unknown sources," and tap to install. This build uses the live InstantDB backend — pins you drop are real.
+
+### Build from source
+
+15 minutes from clone to running on a simulator.
+
+**Prerequisites:**
+- Node.js 20+ (use [nvm](https://github.com/nvm-sh/nvm) — a `.nvmrc` is included)
+- An [InstantDB](https://instantdb.com) app (free tier is enough)
+- A [Google Maps API key](https://console.cloud.google.com) with Maps SDK for iOS + Android enabled
 
 ```bash
-git clone https://github.com/forage-for-all/app
-cd app
+git clone https://github.com/jphein/forageforall.git
+cd forageforall
+nvm use
 npm install
 cp .env.example .env   # fill in INSTANT_APP_ID + Google Maps keys
-npm run schema:push
-npm run seed:species
-npx expo prebuild --clean
-npm run ios            # or: npm run android
+npm run schema:push    # create DB entities in your InstantDB app
+npm run seed:species   # load ~60 common edibles into the catalog
+npx expo start         # scan QR with Expo Go to run on your phone
 ```
 
-Full setup in [`docs/SETUP.md`](./docs/SETUP.md).
+For native builds (required to test the Google Maps integration):
+
+```bash
+npx expo prebuild --clean   # generates ios/ and android/ directories
+npm run ios                 # or: npm run android
+```
+
+Full walkthrough: [`docs/SETUP.md`](./docs/SETUP.md)
 
 ---
 
 ## Stack
 
-- **[Expo](https://expo.dev)** (React Native) — cross-platform, over-the-air updates
-- **[Expo Router](https://docs.expo.dev/router/introduction/)** — file-based navigation
-- **[InstantDB](https://instantdb.com)** — realtime sync, auth, permissions
-- **[react-native-maps](https://github.com/react-native-maps/react-native-maps)** + Google Maps SDK
-- **[Zustand](https://github.com/pmndrs/zustand)** — local state
-- **TypeScript** throughout
+| Layer | Tech | Why |
+|---|---|---|
+| Framework | [Expo SDK 51](https://expo.dev) (React Native 0.74) | Cross-platform, OTA updates, managed build pipeline |
+| Routing | [Expo Router v3](https://docs.expo.dev/router/introduction/) | File-based routes — a file in `app/` is a screen |
+| Backend | [InstantDB](https://instantdb.com) | Realtime sync + auth + permissions, no custom server |
+| Maps | [react-native-maps](https://github.com/react-native-maps/react-native-maps) + Google Maps SDK | Custom paper-textured style |
+| Language | TypeScript (strict) | Required throughout — no `any` escapes |
 
-See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the full picture.
+**No custom backend.** InstantDB handles auth, realtime sync, and access control. This keeps the app deployable by a single volunteer.
+
+Full architecture: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 
 ---
 
 ## Project structure
 
 ```
-forage-app/
-├── app/                    # Expo Router screens
-│   ├── (tabs)/             # Map, Browse, Calendar, Profile
-│   ├── listing/[id].tsx    # Pin detail
-│   ├── add/                # Add-listing flow
+forageforall/
+├── app/                        # Expo Router screens (file = route)
+│   ├── (tabs)/                 # Map, Browse, In Season, Profile tabs
+│   ├── listing/[id].tsx        # Pin detail sheet
+│   ├── add.tsx                 # Add-pin flow
+│   ├── auth.tsx                # Magic-link sign in
 │   └── onboarding.tsx
-├── components/             # Pin, RipenessRing, SeasonStrip, Chip, etc.
-├── lib/
-│   ├── instant.ts          # InstantDB client + hooks
-│   ├── geo.ts              # Geohash + viewport queries
-│   ├── ripeness.ts         # Time-weighted ripeness math
-│   └── maps.ts             # Custom Google Maps styles
-├── theme/                  # Design tokens (colors, type, spacing)
+├── src/
+│   ├── components/             # Pin, RipenessRing, SeasonStrip, Chip, SpeciesCard
+│   ├── config/                 # App constants, feature flags
+│   ├── db/
+│   │   └── schema.ts           # InstantDB schema (source of truth)
+│   ├── hooks/                  # useMapViewport, useRipeness, useAuth, …
+│   ├── lib/
+│   │   ├── geo.ts              # Geohash index + fuzzy location (read before touching)
+│   │   ├── ripeness.ts         # Time-weighted ripeness math (14-day half-life)
+│   │   └── season.ts           # Month-window helpers
+│   └── theme/
+│       └── tokens.ts           # Colors, type scale, spacing — single source of truth
+├── assets/                     # Icon, splash, adaptive icon
+├── docs/                       # GitHub Pages site (static HTML, no build step)
 ├── scripts/
-│   ├── seed-species.ts     # ~60 common edibles seed
-│   └── push-schema.ts      # Instant schema sync
-├── docs/                   # GitHub Pages site
-└── instant.schema.ts       # Source of truth for the DB
+│   └── seed-species.ts         # Seeds ~60 edibles into the catalog
+├── instant.schema.ts           # Re-exports src/db/schema for the Instant CLI
+├── instant.perms.ts            # Row-level permissions for InstantDB
+├── app.config.ts               # Expo config — reads env vars for keys + IDs
+└── eas.json                    # EAS build profiles (preview + production)
 ```
+
+---
+
+## How pins work
+
+1. User taps **+** → selects species from catalog → photo (optional)
+2. GPS coords are **fuzzed to ~110m** before writing — no exact location stored
+3. A [geohash](https://en.wikipedia.org/wiki/Geohash) at precision 5 and 7 is computed and stored as an index
+4. On the map, the viewport bounding box is translated into geohash prefixes → InstantDB query
+5. The **ripeness ring** is recomputed from the species' seasonal window + recent community reports (half-life: 14 days)
+
+---
+
+## Database schema
+
+Entities in `src/db/schema.ts` (push changes with `npm run schema:push`):
+
+| Entity | Purpose |
+|---|---|
+| `species` | Catalog — common name, Latin name, season, toxicity, look-alikes |
+| `listings` | Community pins — location (fuzzed), species, ripeness score, access flags |
+| `reports` | Ripeness/presence confirmations on a listing |
+| `comments` | Text notes on a listing |
+| `profiles` | User profiles — handle, badge count, privacy prefs |
+| `saves` | Bookmarked listings |
+| `flags` | Moderation flags on a listing |
 
 ---
 
@@ -107,15 +159,16 @@ We especially need:
 - 🌳 **Botanists & regional foragers** — species data, toxicity warnings, look-alike flags
 - 🌍 **Translators** — Spanish, French, German, Portuguese, Mandarin first
 - 📱 **Mobile devs** — iOS / Android polish, offline-first improvements
-- 🎨 **Designers** — illustrations for species silhouettes (paper-print style)
+- 🎨 **Designers** — species silhouette illustrations (paper-print style), og-image, store screenshots
 - 🛡️ **Moderators** — regional pin review, abuse handling
 
-**Before you open a PR**, read:
+**Before opening a PR**, read:
 1. [`CONTRIBUTING.md`](./CONTRIBUTING.md) — setup, code style, PR flow
-2. [`FORAGING_ETHICS.md`](./FORAGING_ETHICS.md) — the community code
-3. [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
+2. [`AGENTS.md`](./AGENTS.md) — conventions for AI coding agents (good reading for humans too)
+3. [`FORAGING_ETHICS.md`](./FORAGING_ETHICS.md) — the community code
+4. [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
 
-First-timers: check issues tagged [`good first issue`](https://github.com/forage-for-all/app/labels/good%20first%20issue).
+First-timers: look for issues tagged [`good first issue`](https://github.com/jphein/forageforall/labels/good%20first%20issue).
 
 ---
 
@@ -123,33 +176,45 @@ First-timers: check issues tagged [`good first issue`](https://github.com/forage
 
 > **Take a third, leave a third for the birds, leave a third for the earth.**
 
-- Only pin on **public land** or with explicit permission.
-- Never reveal sensitive species (rare mushrooms, etc.) — moderators blocklist these.
-- Flag roadside / industrial-adjacent finds with contamination warnings.
-- Confirm species with a reliable source before adding it to the catalog.
+- Only pin on **public land** or with explicit permission from the property owner.
+- Never reveal sensitive species (rare mushrooms, protected plants) — moderators blocklist these.
+- Flag roadside and industrial-adjacent finds with contamination warnings.
+- Confirm species with a reliable source before adding to the catalog.
 - If you wouldn't want *your* tree mapped, don't map someone else's.
 
-Full doc: [`FORAGING_ETHICS.md`](./FORAGING_ETHICS.md).
+Full doc: [`FORAGING_ETHICS.md`](./FORAGING_ETHICS.md)
+
+---
+
+## What we will not do
+
+Some things get asked for often. The answer is no, and it's not changing:
+
+- **AI plant-ID that auto-confirms species.** Wrong IDs can poison people. Humans pick from the catalog.
+- **Ads.** Not now, not ever.
+- **Exact coordinates by default.** Privacy defaults don't move.
+- **Venture funding.** Mission incompatibility.
+- **Closed-source premium tier.** AGPLv3 makes this legally impossible anyway.
 
 ---
 
 ## License
 
-**[GNU AGPLv3](./LICENSE)** — you can use, modify, and redistribute, but:
+**[GNU AGPLv3](./LICENSE)** — you can use, modify, and redistribute this code, but:
 
-- Modified versions must **share their source**.
-- This includes **hosted services** — you can't run a closed SaaS on this code.
+- Modified versions must **share their source** under the same license.
+- This includes **hosted services** — you cannot run a closed SaaS on this codebase.
 
-This is intentional. Community-contributed data shouldn't end up behind someone else's paywall.
+This is deliberate. Community-contributed foraging data shouldn't end up behind a paywall.
 
 ---
 
 ## Credits
 
 - Species data: **[GBIF](https://gbif.org)**, **[iNaturalist](https://inaturalist.org)**, USDA PLANTS
-- Base maps: **Google Maps Platform** (custom styled — see [`lib/maps.ts`](./lib/maps.ts))
+- Base maps: **Google Maps Platform** — custom paper-textured style in [`src/lib/maps.ts`](./src/lib/maps.ts) (note: file forthcoming)
 - Typography: **[Fraunces](https://fonts.google.com/specimen/Fraunces)** (display), **[Inter](https://rsms.me/inter/)** (UI)
-- Inspired by [Falling Fruit](https://fallingfruit.org), [iNaturalist](https://inaturalist.org), and every neighbor who's ever handed a stranger a bag of lemons.
+- Inspired by [Falling Fruit](https://fallingfruit.org), [iNaturalist](https://inaturalist.org), and every neighbor who's ever handed a stranger a bag of lemons
 
 ---
 
