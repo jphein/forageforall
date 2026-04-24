@@ -20,17 +20,30 @@ Forage for All is an open-source React Native (Expo) app that maps fruit trees a
 ## Where things live
 
 ```
-app/                   Expo Router file-based screens — creating a file here creates a route
-components/            Shared UI — Pin, RipenessRing, SeasonStrip, Chip, SpeciesCard
-lib/
-  instant.ts           InstantDB client, schema import, typed hooks
-  geo.ts               Geohash + viewport queries — do NOT reinvent this
-  ripeness.ts          Time-weighted ripeness math — read the comment before editing
-  maps.ts              Google Maps customMapStyle variants (Paper, Dark)
-theme/                 Colors, type scale, spacing — SINGLE SOURCE OF TRUTH
-scripts/               Seed data, schema push, one-off tooling
-instant.schema.ts      ← the DB shape. If you change this, run `npm run schema:push`.
-docs/                  GitHub Pages marketing site. Static HTML. No build step.
+app/                        Expo Router file-based screens — creating a file here creates a route
+src/
+  components/               Shared UI — Pin, RipenessRing, SeasonStrip, Chip, LayerSheet
+  config/
+    mapStyles.ts            Google Maps customMapStyle variants (Paper, Dark, Satellite)
+    sourceLayers.ts         Registry of open-data sources + attribution
+  db/
+    schema.ts               InstantDB schema (re-exported via instant.schema.ts)
+    client.ts               InstantDB client + hooks
+  hooks/
+    useListings.ts          Viewport-aware geohash query with layer filtering
+    useSourceLayers.ts      Persisted (AsyncStorage) layer toggle state
+  lib/
+    geo.ts                  Geohash + viewport queries — do NOT reinvent this
+    ripeness.ts             Time-weighted ripeness math — read the comment before editing
+  theme/
+    tokens.ts               Colors, type scale, spacing — SINGLE SOURCE OF TRUTH
+scripts/
+  seed-species.ts           Seed ~60 edible species into the catalog
+  seed-listings.ts          Aggregate open-data pins from iNat/GBIF/OSM/city datasets
+  sync-listings.ts          Refresh stale open-data listings per-source
+instant.schema.ts           ← the DB shape. If you change this, run `npm run schema:push`.
+instant.perms.ts            InstantDB permission rules — push with `npm run perms:push`
+docs/                       GitHub Pages marketing site. Static HTML. No build step.
 ```
 
 ## Commands you can run

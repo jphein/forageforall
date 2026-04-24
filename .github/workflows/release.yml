@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to release (e.g. v0.1.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -11,6 +17,9 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,40 +38,129 @@ jobs:
           npm run typecheck
           npm run lint
 
-      - name: Generate changelog section
-        id: changelog
+      - name: Resolve release tag
+        id: resolve
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          # Pull the section for this tag out of CHANGELOG.md
-          tag=${GITHUB_REF#refs/tags/}
-          version=${tag#v}
-          awk -v v="$version" '
-            /^## \['"$version"'\]/ { flag=1; next }
+          if [ -n "$INPUT_TAG" ]; then
+            tag="$INPUT_TAG"
+          else
+            tag="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog section
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { flag=1; next }
             /^## \[/ && flag { exit }
             flag { print }
           ' CHANGELOG.md > release-notes.md
-          echo "notes_file=release-notes.md" >> $GITHUB_OUTPUT
+          if [ ! -s release-notes.md ]; then
+            {
+              echo "Forage for All $VERSION"
+              echo ""
+              echo "See the full changelog in [CHANGELOG.md](./CHANGELOG.md)."
+            } > release-notes.md
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.resolve.outputs.tag }}
           body_path: release-notes.md
           draft: false
-          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+          prerelease: ${{ contains(steps.resolve.outputs.tag, '-beta') || contains(steps.resolve.outputs.tag, '-rc') }}
 
-  # EAS build disabled until an Expo account + EXPO_TOKEN secret are configured.
-  # Uncomment when ready:
-  #
-  # build:
-  #   needs: release
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with: { node-version: 20 }
-  #     - uses: expo/expo-github-action@v8
-  #       with:
-  #         eas-version: latest
-  #         token: ${{ secrets.EXPO_TOKEN }}
-  #     - run: npm ci
-  #     - run: eas build --platform all --profile production --non-interactive
-  #     - run: eas submit --platform all --profile production --non-interactive
+  build-android:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: Build Android APK via EAS
+        id: eas
+        env:
+          INSTANT_APP_ID: ${{ secrets.INSTANT_APP_ID }}
+          GOOGLE_MAPS_ANDROID_KEY: ${{ secrets.GOOGLE_MAPS_ANDROID_KEY }}
+          GOOGLE_MAPS_IOS_KEY: ${{ secrets.GOOGLE_MAPS_IOS_KEY }}
+        run: |
+          eas build --profile preview --platform android --non-interactive --wait --json > build.json
+          cat build.json
+          URL=$(jq -r '.[0].artifacts.buildUrl' build.json)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Download APK
+        env:
+          URL: ${{ steps.eas.outputs.url }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          curl -L "$URL" -o "forage-for-all-${VERSION}-preview.apk"
+          ls -lh *.apk
+
+      - name: Attach APK to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release.outputs.tag }}
+          files: forage-for-all-*-preview.apk
+
+  build-ios:
+    needs: release
+    runs-on: ubuntu-latest
+    if: ${{ !contains(needs.release.outputs.tag, '-beta') && !contains(needs.release.outputs.tag, '-rc') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: Build iOS simulator bundle via EAS
+        id: eas
+        env:
+          INSTANT_APP_ID: ${{ secrets.INSTANT_APP_ID }}
+          GOOGLE_MAPS_IOS_KEY: ${{ secrets.GOOGLE_MAPS_IOS_KEY }}
+          GOOGLE_MAPS_ANDROID_KEY: ${{ secrets.GOOGLE_MAPS_ANDROID_KEY }}
+        run: |
+          eas build --profile preview --platform ios --non-interactive --wait --json > build.json
+          cat build.json
+          URL=$(jq -r '.[0].artifacts.buildUrl' build.json)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Download iOS build
+        env:
+          URL: ${{ steps.eas.outputs.url }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          curl -L "$URL" -o "forage-for-all-${VERSION}-ios-simulator.tar.gz"
+          ls -lh forage-for-all-*
+
+      - name: Attach iOS bundle to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release.outputs.tag }}
+          files: forage-for-all-*-ios-simulator.tar.gz

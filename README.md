@@ -43,7 +43,7 @@ Billions of pounds of fruit fall to sidewalks every year while people buy the sa
 
 ### Try it now (Android)
 
-A preview APK is available via [EAS](https://expo.dev/accounts/kasdf/projects/forage-for-all/builds). Download it, enable "Install from unknown sources," and tap to install. This build uses the live InstantDB backend — pins you drop are real.
+Download the latest preview APK from **[GitHub Releases](https://github.com/jphein/forageforall/releases/latest)**, enable "Install from unknown sources," and tap to install. The build uses the live InstantDB backend, so pins you drop are real. iOS store build is queued.
 
 ### Build from source
 
@@ -59,10 +59,11 @@ git clone https://github.com/jphein/forageforall.git
 cd forageforall
 nvm use
 npm install
-cp .env.example .env   # fill in INSTANT_APP_ID + Google Maps keys
-npm run schema:push    # create DB entities in your InstantDB app
-npm run seed:species   # load ~60 common edibles into the catalog
-npx expo start         # scan QR with Expo Go to run on your phone
+cp .env.example .env        # fill in INSTANT_APP_ID + Google Maps keys
+npm run schema:push         # create DB entities in your InstantDB app
+npm run seed:species        # load ~60 common edibles into the catalog
+npm run seed:listings       # (optional) aggregate open-data pins from iNaturalist + OSM + GBIF
+npx expo start              # scan QR with Expo Go to run on your phone
 ```
 
 For native builds (required to test the Google Maps integration):
@@ -92,6 +93,27 @@ Full architecture: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 
 ---
 
+## Data sources (aggregated as toggleable layers)
+
+Community pins are the heart, but we also seed the map from open data so you see something the first time you open the app. Every listing carries a `source` tag, and each source is rendered as its own map layer with a distinct pin color. Toggle them on/off inside the app via the **layers** icon on the map.
+
+| Source | Key | License | Coverage |
+|---|---|---|---|
+| **Forage for All community** | `community` | AGPLv3 (code), CC BY-SA 4.0 (data) | User-submitted, fuzzy to ~110m |
+| **[iNaturalist](https://inaturalist.org)** | `inat` | CC BY-NC 4.0 | Research-grade observations globally |
+| **[GBIF](https://gbif.org)** | `gbif` | CC0 / CC BY 4.0 | Scientific occurrences |
+| **[OpenStreetMap](https://openstreetmap.org)** | `osm` | ODbL | Tagged fruit/nut trees in urban areas |
+| **[Falling Fruit](https://fallingfruit.org)** | `fallingfruit` | CC BY-SA 4.0 | Public-land foraging map (API key required) |
+| **SF Street Trees** | `sf_trees` | PDDL | San Francisco edible species |
+| **NYC Street Tree Census** | `nyc_trees` | CC0 | NYC edible genera |
+| **Portland Trees** | `portland_trees` | PDDL | Portland edible species |
+
+**Refresh the map** with `npm run seed:listings` (pulls all sources for every region) or target one: `npm run seed:listings -- --source inat --region "Nevada County, CA"`.
+
+A weekly GitHub Action (`.github/workflows/sync-data.yml`) re-runs the aggregation automatically so the map stays fresh.
+
+---
+
 ## Project structure
 
 ```
@@ -103,11 +125,16 @@ forageforall/
 │   ├── auth.tsx                # Magic-link sign in
 │   └── onboarding.tsx
 ├── src/
-│   ├── components/             # Pin, RipenessRing, SeasonStrip, Chip, SpeciesCard
-│   ├── config/                 # App constants, feature flags
+│   ├── components/             # Pin, RipenessRing, SeasonStrip, Chip, LayerSheet
+│   ├── config/
+│   │   ├── mapStyles.ts        # Paper / Dark / Satellite custom Google Maps styles
+│   │   └── sourceLayers.ts     # Registry of open-data sources + attribution
 │   ├── db/
 │   │   └── schema.ts           # InstantDB schema (source of truth)
-│   ├── hooks/                  # useMapViewport, useRipeness, useAuth, …
+│   ├── hooks/
+│   │   ├── useListings.ts      # Viewport-aware geohash query with layer filtering
+│   │   ├── useSourceLayers.ts  # Persisted (AsyncStorage) layer toggle state
+│   │   └── useCurrentLocation.ts
 │   ├── lib/
 │   │   ├── geo.ts              # Geohash index + fuzzy location (read before touching)
 │   │   ├── ripeness.ts         # Time-weighted ripeness math (14-day half-life)
@@ -117,7 +144,9 @@ forageforall/
 ├── assets/                     # Icon, splash, adaptive icon
 ├── docs/                       # GitHub Pages site (static HTML, no build step)
 ├── scripts/
-│   └── seed-species.ts         # Seeds ~60 edibles into the catalog
+│   ├── seed-species.ts         # Seeds ~60 edibles into the catalog
+│   ├── seed-listings.ts        # Aggregates listings from iNat + GBIF + OSM + city datasets
+│   └── sync-listings.ts        # Refreshes stale open-data listings per-source
 ├── instant.schema.ts           # Re-exports src/db/schema for the Instant CLI
 ├── instant.perms.ts            # Row-level permissions for InstantDB
 ├── app.config.ts               # Expo config — reads env vars for keys + IDs

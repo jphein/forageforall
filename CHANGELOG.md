@@ -6,18 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-### Added
-- Initial public repository
-- React Native + Expo app scaffold
-- InstantDB schema + seed species (~60 common edibles)
-- Google Maps integration with paper + dark custom styles
-- Core screens: Map, Listing detail, Add flow, Browse, Calendar, Profile, About, Onboarding
-- Agent-friendly repo docs (AGENTS.md, CLAUDE.md, .cursorrules, copilot-instructions.md)
-- GitHub Pages marketing site (docs/)
-- Foraging ethics, privacy policy, security policy, code of conduct
-- Issue + PR templates
-- llms.txt at docs root
+## [0.1.0] — 2026-04-24
 
-## [0.1.0] — TBD
+First public preview. Everything you need to try the app and start dropping pins.
 
-First public beta.
+### App
+- React Native + Expo SDK 51 scaffold with file-based routing (Expo Router v3)
+- Core screens: Map (clustered), Listing detail, Add flow, Browse, Calendar, Profile, About, Onboarding
+- Google Maps integration with a custom paper-textured style (and a dark variant)
+- Privacy-first: coordinates fuzzed to ~110m on community pins
+- Ripeness ring math (14-day half-life) blends species seasonality with community confirmations
+
+### Data
+- InstantDB realtime backend, no custom server
+- `source`-tagged listings render as toggleable map layers with per-source pin colors
+- Open-data aggregator `npm run seed:listings` pulls from iNaturalist, GBIF, OpenStreetMap, Falling Fruit, and SF/NYC/Portland street-tree inventories
+- Weekly GitHub Action re-syncs stale open-data pins
+- Seed catalog of ~60 common edibles + Sierra Nevada natives (manzanita, toyon, oaks, elderberry)
+- Nevada County, CA seeded with 3,198 iNaturalist + GBIF pins on first run
+
+### Builds
+- EAS preview profile producing installable Android APK + iOS simulator bundle
+- Release pipeline (GitHub Actions) attaches APK + iOS bundle to every tag
+- Weekly `sync-data.yml` refresh workflow
+
+### Meta
+- AGPLv3 — non-negotiable, protects the community data from closed forks
+- Agent-friendly docs (AGENTS.md, CLAUDE.md, `.cursorrules`, `copilot-instructions.md`)
+- GitHub Pages marketing site with generated OG image
+- Foraging ethics, privacy policy, security policy, code of conduct, governance
+- Issue + PR templates, `llms.txt`
