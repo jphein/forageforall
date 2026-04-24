@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-04-24
+
+- Browse and In Season (calendar) tabs: horizontal chip / month rows no
+  longer stretch vertically when the list below them is sparse (or squash
+  when it's full). Root cause: horizontal ScrollViews inside a flex-column
+  parent with a FlatList sibling were expanding to fill the column's
+  unused height. Fix: `flexGrow: 0` + `flexShrink: 0` on the scroller.
+- Browse filter chips expanded to the full 12-kind set (Pears, Grapes,
+  Figs, Flowers, Mushrooms added, already matched the map).
+
 ## [0.1.3] — 2026-04-24
 
 Bug fix on 0.1.2.

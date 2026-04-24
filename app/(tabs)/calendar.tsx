@@ -36,6 +36,7 @@ export default function CalendarScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.monthRow}
+        style={styles.monthScroller}
       >
         {MONTH_NAMES.map((name, i) => {
           const m = i + 1;
@@ -132,10 +133,12 @@ function glyphFor(kind: string) {
 }
 
 const styles = StyleSheet.create({
+  monthScroller: { flexGrow: 0, flexShrink: 0 },
   monthRow: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     gap: spacing.sm,
+    alignItems: "center",
   },
   monthCell: {
     paddingHorizontal: spacing.lg,

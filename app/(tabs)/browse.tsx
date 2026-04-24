@@ -18,7 +18,10 @@ import { distanceMeters } from "../../src/lib/geo";
 import { colors, palette, radius, spacing } from "../../src/theme/tokens";
 import { currentMonth } from "../../src/lib/season";
 
-const KINDS = ["apple", "citrus", "berry", "stone", "nut", "herb", "veg", "fig"];
+const KINDS = [
+  "apple", "pear", "citrus", "berry", "stone", "grape",
+  "fig", "nut", "herb", "veg", "flower", "mushroom",
+];
 
 export default function BrowseScreen() {
   const router = useRouter();
@@ -82,6 +85,7 @@ export default function BrowseScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chips}
+        style={styles.chipScroller}
       >
         <Chip label="In season" active={inSeasonOnly} onPress={() => setInSeasonOnly((v) => !v)} tone="moss" />
         {KINDS.map((k) => (
@@ -140,9 +144,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 15,
   },
+  // `flexGrow: 0` stops the horizontal ScrollView from stretching vertically
+  // to fill the gap between the search row and the FlatList.
+  chipScroller: { flexGrow: 0, flexShrink: 0 },
   chips: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     gap: spacing.sm,
+    alignItems: "center",
   },
 });
