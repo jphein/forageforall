@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-04-24
+
+UX polish on top of 0.1.1.
+
+- Ripeness legend hides when a pin is selected (was overlapping the bottom
+  preview card).
+- Pin preview card gets a close (×) button so users can dismiss without
+  tapping another pin.
+- Preview card shows toxicity badge (⚠ caution) for species with `isToxic`,
+  a description preview line, and a look-alike warning callout when toxic
+  species have lookAlikes recorded.
+- "tap for details" affordance added to the source attribution row.
+
 ## [0.1.1] — 2026-04-24
 
 Shipped the same day as 0.1.0 — fixes all the things that were half-plumbed when
