@@ -11,7 +11,7 @@ const config: ExpoConfig = {
   slug: "forage-for-all",
   owner: "kasdf",
   scheme: "forage",
-  version: "0.1.2",
+  version: "0.1.3",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",

@@ -212,19 +212,15 @@ export default function MapScreen() {
       {selected ? (
         <SafeAreaView edges={["bottom"]} style={styles.sheet} pointerEvents="box-none">
           <View style={styles.sheetInner}>
-            <Pressable
+            <ListingCard
+              listing={selected}
+              distance={
+                location
+                  ? distanceMeters(location, { lat: selected.lat, lng: selected.lng })
+                  : undefined
+              }
               onPress={() => router.push(`/listing/${selected.id}`)}
-              style={{ flex: 1 }}
-            >
-              <ListingCard
-                listing={selected}
-                distance={
-                  location
-                    ? distanceMeters(location, { lat: selected.lat, lng: selected.lng })
-                    : undefined
-                }
-              />
-            </Pressable>
+            />
             <Pressable
               onPress={() => setSelectedId(null)}
               hitSlop={12}

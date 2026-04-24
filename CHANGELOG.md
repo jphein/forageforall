@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-04-24
+
+Bug fix on 0.1.2.
+
+- Tapping the bottom preview card now actually navigates to the listing detail
+  page. 0.1.2 wrapped the ListingCard (itself a Pressable) in an outer
+  Pressable — the inner one claimed the touch but had no handler, so taps
+  went nowhere. Fix: pass onPress directly to ListingCard instead of
+  nesting.
+
 ## [0.1.2] — 2026-04-24
 
 UX polish on top of 0.1.1.
