@@ -11,6 +11,13 @@ import { colors, palette, radius, spacing, shadow } from "../theme/tokens";
 import { describeSeason, isInSeason } from "../lib/season";
 import { RIPENESS_SHORT } from "../lib/ripeness";
 import { formatDistance } from "../lib/geo";
+import { SOURCE_BY_KEY, SourceKey, getSourceColor } from "../config/sourceLayers";
+
+const KIND_GLYPH: Record<string, string> = {
+  apple: "🍎", pear: "🍐", citrus: "🍊", berry: "🫐",
+  stone: "🍑", nut: "🌰", fig: "🫒", grape: "🍇",
+  herb: "🌿", veg: "🥬", flower: "🌼", mushroom: "🍄",
+};
 
 export function ListingCard({
   listing,
@@ -24,6 +31,11 @@ export function ListingCard({
   const species = listing.species ?? {};
   const months: number[] = Array.isArray(species.seasonMonths) ? species.seasonMonths : [];
   const ripe = listing.currentRipeness ?? 0;
+  const kind = listing.kind ?? species.kind ?? "herb";
+  const glyph = KIND_GLYPH[kind] ?? "🌱";
+  const sourceKey = (listing.source ?? "community") as SourceKey;
+  const sourceLayer = SOURCE_BY_KEY[sourceKey];
+  const ripeBucket = Math.max(0, Math.min(4, Math.round(ripe))) as 0 | 1 | 2 | 3 | 4;
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [
@@ -36,7 +48,7 @@ export function ListingCard({
           <Image source={{ uri: species.photoUrl }} style={styles.photo} contentFit="cover" />
         ) : (
           <View style={[styles.photo, { backgroundColor: palette.sage, alignItems: "center", justifyContent: "center" }]}>
-            <Text style={{ fontSize: 32 }}>🌿</Text>
+            <Text style={{ fontSize: 32 }}>{glyph}</Text>
           </View>
         )}
         <View style={styles.ringBadge}>
@@ -52,13 +64,17 @@ export function ListingCard({
 
         <View style={styles.metaRow}>
           <Text variant="caption" soft>
-            {RIPENESS_SHORT[ripe as 0] ?? "—"}
+            {RIPENESS_SHORT[ripeBucket] ?? "—"}
           </Text>
-          <Dot />
-          <Text variant="caption" soft numberOfLines={1}>
-            {describeSeason(months)}
-            {isInSeason(months) ? " · in season" : ""}
-          </Text>
+          {months.length ? (
+            <>
+              <Dot />
+              <Text variant="caption" soft numberOfLines={1}>
+                {describeSeason(months)}
+                {isInSeason(months) ? " · in season" : ""}
+              </Text>
+            </>
+          ) : null}
           {typeof distance === "number" ? (
             <>
               <Dot />
@@ -66,6 +82,15 @@ export function ListingCard({
             </>
           ) : null}
         </View>
+
+        {sourceLayer ? (
+          <View style={styles.sourceRow}>
+            <View style={[styles.sourceDot, { backgroundColor: getSourceColor(sourceKey) }]} />
+            <Text variant="caption" muted numberOfLines={1}>
+              via {sourceLayer.shortLabel}
+            </Text>
+          </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -102,4 +127,6 @@ const styles = StyleSheet.create({
   },
   body: { flex: 1, justifyContent: "center" },
   metaRow: { flexDirection: "row", alignItems: "center", marginTop: 4, flexWrap: "wrap" },
+  sourceRow: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 6 },
+  sourceDot: { width: 8, height: 8, borderRadius: 4 },
 });

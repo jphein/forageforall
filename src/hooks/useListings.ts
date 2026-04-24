@@ -63,7 +63,12 @@ export function useListings(region: Region | null, filter: ListingFilter = {}) {
   const filtered = useMemo(() => {
     let out = listings;
     if (filter.kinds?.length) {
-      out = out.filter((l) => l.species && filter.kinds!.includes(l.species.kind));
+      // Prefer the denormalized `kind` field on the listing; fall back to
+      // the linked species' kind for community pins that predate the field.
+      out = out.filter((l) => {
+        const k = l.kind ?? l.species?.kind;
+        return k && filter.kinds!.includes(k);
+      });
     }
     if (filter.inSeason) {
       out = out.filter((l) =>

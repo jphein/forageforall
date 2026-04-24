@@ -29,6 +29,10 @@ const _schema = i.schema({
       notes: i.string().optional(),
       accessFlags: i.json(),
 
+      // Denormalized from the linked species — lets the map filter by
+      // kind without forcing a join. Kept in sync at write time.
+      kind: i.string().indexed().optional(),
+
       currentRipeness: i.number().indexed(),
       lastConfirmedAt: i.date().optional().indexed(),
       reportCount: i.number(),

@@ -19,8 +19,7 @@
 
 import { init } from "@instantdb/admin";
 import "dotenv/config";
-import { SPECIES } from "./species-data";
-import { createHash } from "node:crypto";
+import { SPECIES, idForSpecies } from "./species-data";
 
 const appId = process.env.INSTANT_APP_ID;
 const adminToken = process.env.INSTANT_ADMIN_TOKEN;
@@ -35,22 +34,6 @@ if (!adminToken) {
 
 const db = init({ appId, adminToken });
 const WIPE_ORPHANS = process.argv.includes("--wipe");
-
-/**
- * Deterministic UUID derived from latinName via SHA-1.
- * Same latin name → same ID, so db.tx.species[id].update(...) becomes
- * an upsert that never duplicates on re-run.
- * Formatted as UUIDv5 per RFC 4122 §4.3 (name-based, SHA-1).
- */
-function idForSpecies(latinName: string): string {
-  const hash = createHash("sha1").update(`forage-species:${latinName}`).digest("hex");
-  // Mask version (v5) + variant bits per UUIDv5 spec
-  const b = Buffer.from(hash.slice(0, 32), "hex");
-  b[6] = (b[6] & 0x0f) | 0x50; // version 5
-  b[8] = (b[8] & 0x3f) | 0x80; // variant
-  const h = b.toString("hex");
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
-}
 
 
 async function wipeOrphans() {

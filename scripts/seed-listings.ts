@@ -27,29 +27,30 @@ import { init } from "@instantdb/admin";
 import "dotenv/config";
 import geohash from "ngeohash";
 import { createHash } from "node:crypto";
-import { SPECIES } from "./species-data";
+import { SPECIES, idForSpecies, type Seed } from "./species-data";
 
 /**
- * seasonMonths lookups, built once at startup from the shared species catalog
- * so both seed scripts stay aligned. Tried in order: latinName → genus → commonName.
+ * Species lookups, built once at startup from the shared species catalog so
+ * both seed scripts stay aligned. Tried in order: latinName → genus → commonName.
  */
-const SEASON_BY_LATIN = new Map<string, number[]>();
-const SEASON_BY_GENUS = new Map<string, number[]>();
-const SEASON_BY_COMMON = new Map<string, number[]>();
+const SPECIES_BY_LATIN = new Map<string, Seed>();
+const SPECIES_BY_GENUS = new Map<string, Seed>();
+const SPECIES_BY_COMMON = new Map<string, Seed>();
 for (const s of SPECIES) {
-  SEASON_BY_LATIN.set(s.latinName, s.seasonMonths);
+  SPECIES_BY_LATIN.set(s.latinName, s);
   const genus = s.latinName.split(" ")[0];
-  if (!SEASON_BY_GENUS.has(genus)) SEASON_BY_GENUS.set(genus, s.seasonMonths);
-  SEASON_BY_COMMON.set(s.commonName, s.seasonMonths);
+  if (!SPECIES_BY_GENUS.has(genus)) SPECIES_BY_GENUS.set(genus, s);
+  SPECIES_BY_COMMON.set(s.commonName, s);
 }
 
-function lookupSeason(latinName?: string, commonName?: string): number[] | undefined {
-  if (latinName && SEASON_BY_LATIN.has(latinName)) return SEASON_BY_LATIN.get(latinName);
+/** Look up the best-matching Seed from the catalog for an imported listing. */
+function lookupSpecies(latinName?: string, commonName?: string): Seed | undefined {
+  if (latinName && SPECIES_BY_LATIN.has(latinName)) return SPECIES_BY_LATIN.get(latinName);
   if (latinName) {
     const genus = latinName.split(" ")[0];
-    if (SEASON_BY_GENUS.has(genus)) return SEASON_BY_GENUS.get(genus);
+    if (SPECIES_BY_GENUS.has(genus)) return SPECIES_BY_GENUS.get(genus);
   }
-  if (commonName && SEASON_BY_COMMON.has(commonName)) return SEASON_BY_COMMON.get(commonName);
+  if (commonName && SPECIES_BY_COMMON.has(commonName)) return SPECIES_BY_COMMON.get(commonName);
   return undefined;
 }
 
@@ -687,12 +688,18 @@ async function writePins(pins: PlantPin[], regionName: string) {
   }
 
   const now = new Date();
-  const txs = unique.map((p) => {
+  const txs = unique.flatMap((p) => {
     const lat = fuzz(p.lat);
     const lng = fuzz(p.lng);
-    const season = lookupSeason(p.latinName, p.common);
-    // Idempotent: DB id is derived from sourceId, so re-runs upsert
-    return db.tx.listings[idForListing(p.sourceId)].update({
+    const species = lookupSpecies(p.latinName, p.common);
+    const listingId = idForListing(p.sourceId);
+
+    // Denormalise kind onto the listing so map filters work without a join.
+    // Use the catalog kind when we matched a species, otherwise fall back to
+    // the taxon's kind from the import mapper.
+    const kind = species?.kind ?? p.kind;
+
+    const update = db.tx.listings[listingId].update({
       lat,
       lng,
       geohash5: geohash.encode(lat, lng, 5),
@@ -700,15 +707,23 @@ async function writePins(pins: PlantPin[], regionName: string) {
       title: `${p.common} — ${regionName}`,
       notes: p.notes,
       accessFlags: { public: true },
-      currentRipeness: computeRipeness(season, now),
+      currentRipeness: computeRipeness(species?.seasonMonths, now),
       reportCount: 0,
       stillThereScore: 1,
       status: "active",
+      kind,
       source: p.source,
       sourceId: p.sourceId,
       sourceSyncedAt: now,
       createdAt: now,
     });
+
+    // If we matched a species in the catalog, link the listing to it so
+    // the ListingCard/detail/calendar UIs can show photos, season strips, etc.
+    if (species) {
+      return [update.link({ species: idForSpecies(species.latinName) })];
+    }
+    return [update];
   });
 
   for (let i = 0; i < txs.length; i += 100) {

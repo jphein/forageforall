@@ -32,13 +32,18 @@ const DEFAULT_REGION: Region = {
 };
 
 const KIND_FILTERS: { key: string; label: string }[] = [
-  { key: "apple", label: "Apples" },
-  { key: "citrus", label: "Citrus" },
-  { key: "berry", label: "Berries" },
-  { key: "stone", label: "Stone fruit" },
-  { key: "nut", label: "Nuts" },
-  { key: "herb", label: "Herbs" },
-  { key: "veg", label: "Veg" },
+  { key: "apple",    label: "Apples" },
+  { key: "pear",     label: "Pears" },
+  { key: "citrus",   label: "Citrus" },
+  { key: "berry",    label: "Berries" },
+  { key: "stone",    label: "Stone fruit" },
+  { key: "grape",    label: "Grapes" },
+  { key: "fig",      label: "Figs" },
+  { key: "nut",      label: "Nuts" },
+  { key: "herb",     label: "Herbs" },
+  { key: "veg",      label: "Veg" },
+  { key: "flower",   label: "Flowers" },
+  { key: "mushroom", label: "Mushrooms" },
 ];
 
 export default function MapScreen() {
@@ -156,7 +161,7 @@ export default function MapScreen() {
             anchor={{ x: 0.5, y: 1 }}
           >
             <MapPin
-              kind={l.species?.kind ?? "herb"}
+              kind={l.kind ?? l.species?.kind ?? "herb"}
               ripeness={l.currentRipeness ?? 0}
               selected={selectedId === l.id}
               sourceColor={getSourceColor(l.source)}

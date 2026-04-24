@@ -11,6 +11,8 @@
  * toxicity / look-alike warnings for anything non-obvious.
  */
 
+import { createHash } from "node:crypto";
+
 export type Seed = {
   commonName: string;
   latinName: string;
@@ -20,6 +22,20 @@ export type Seed = {
   isToxic?: boolean;
   lookAlikes?: string[];
 };
+
+/**
+ * Deterministic UUIDv5 derived from a species' latin name — same latin name
+ * always produces the same InstantDB id. Shared between seed-species (writes
+ * the species entity) and seed-listings (links each listing to its species).
+ */
+export function idForSpecies(latinName: string): string {
+  const hash = createHash("sha1").update(`forage-species:${latinName}`).digest("hex");
+  const b = Buffer.from(hash.slice(0, 32), "hex");
+  b[6] = (b[6] & 0x0f) | 0x50; // version 5
+  b[8] = (b[8] & 0x3f) | 0x80; // variant
+  const h = b.toString("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+}
 
 export const SPECIES: Seed[] = [
   { commonName: "Apple", latinName: "Malus domestica", kind: "apple", seasonMonths: [8, 9, 10, 11], description: "Common fruit tree; countless cultivars. Look for naturalized trees near old homesteads and roadsides." },
