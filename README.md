@@ -110,7 +110,7 @@ Community pins are the heart, but we also seed the map from open data so you see
 
 **Refresh the map** with `npm run seed:listings` (pulls all sources for every region) or target one: `npm run seed:listings -- --source inat --region "Nevada County, CA"`.
 
-First run of the aggregator seeded **3,198 edible-plant pins for Nevada County, CA** alone — manzanita, toyon, black oak, elderberry, wild grape, plus the expected fruit trees — pulled from iNaturalist and GBIF. A weekly GitHub Action (`.github/workflows/sync-data.yml`) re-runs the aggregation so the map stays fresh.
+First run of the aggregator seeded **3,603 edible-plant pins for Nevada County, CA** alone — manzanita, toyon, black oak, elderberry, wild grape, plus the expected fruit trees — pulled from iNaturalist and GBIF. Each pin is linked to a species entity in the catalog, so photos, season, toxicity, and look-alike warnings light up on tap. A weekly GitHub Action (`.github/workflows/sync-data.yml`) re-runs the aggregation so the map stays fresh, and both seeds are idempotent (deterministic UUID-v5 IDs keyed off latin name + sourceId) so re-runs upsert in place.
 
 ---
 
@@ -144,8 +144,10 @@ forageforall/
 ├── assets/                     # Icon, splash, adaptive icon
 ├── docs/                       # GitHub Pages site (static HTML, no build step)
 ├── scripts/
-│   ├── seed-species.ts         # Seeds ~85 edibles (incl. Sierra Nevada natives) into the catalog
-│   ├── seed-listings.ts        # Aggregates listings from iNat + GBIF + OSM + city datasets
+│   ├── species-data.ts         # Shared species catalog (single source of truth for both seeds)
+│   ├── seed-species.ts         # Idempotent upsert of ~85 species (SHA-1 UUIDs keyed off latin name)
+│   ├── seed-listings.ts        # Aggregates listings from iNat + GBIF + OSM + city datasets,
+│   │                           #   links each to its species, denormalises kind + ripeness
 │   └── sync-listings.ts        # Refreshes stale open-data listings per-source
 ├── instant.schema.ts           # Re-exports src/db/schema for the Instant CLI
 ├── instant.perms.ts            # Row-level permissions for InstantDB
@@ -171,13 +173,15 @@ Entities in `src/db/schema.ts` (push changes with `npm run schema:push`):
 
 | Entity | Purpose |
 |---|---|
-| `species` | Catalog — common name, Latin name, season, toxicity, look-alikes |
-| `listings` | Community pins — location (fuzzed), species, ripeness score, access flags |
+| `species` | Catalog — common name, Latin name, `kind`, `seasonMonths`, toxicity, look-alikes |
+| `listings` | Pins (community + imports) — fuzzed location, geohash5/7, `kind` (denormalised), linked `species`, `currentRipeness`, `source`, `sourceId`, `sourceSyncedAt` |
 | `reports` | Ripeness/presence confirmations on a listing |
 | `comments` | Text notes on a listing |
 | `profiles` | User profiles — handle, badge count, privacy prefs |
 | `saves` | Bookmarked listings |
 | `flags` | Moderation flags on a listing |
+
+Listings include `source` (community · inat · gbif · osm · fallingfruit · sf_trees · nyc_trees · portland_trees) and `sourceId` (e.g. `inat:12345`) so imports can be idempotently upserted. The `kind` field is indexed and filterable — lets the map filter by category without forcing a join.
 
 ---
 

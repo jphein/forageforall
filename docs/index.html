@@ -500,7 +500,7 @@
         <h2>The map isn't empty when you open it.</h2>
       </div>
       <p class="layers-stat">
-        <span><b>3,198</b> seeded pins in Nevada County, CA.</span>
+        <span><b>3,603</b> seeded pins in Nevada County, CA.</span>
         <span>Global coverage via <b>7 open data sources</b>.</span>
       </p>
       <p style="text-align: center; color: var(--inkSoft); max-width: 640px; margin: 0 auto 12px;">
@@ -646,14 +646,16 @@ npx expo start              <span style="opacity:.5"># scan QR with Expo Go, or 
           <h3 id="architecture">Architecture at a glance</h3>
           <ul>
             <li><strong>Expo Router</strong> for file-based navigation</li>
-            <li><strong>InstantDB</strong> for real-time sync — all listings, reports, and comments are live for everyone else the moment you save them</li>
+            <li><strong>InstantDB</strong> for realtime sync — all listings, reports, and comments are live on other devices within ~200&thinsp;ms</li>
             <li><strong>Geohash prefix queries</strong> for viewport-scoped map loads (Instant has no native geo yet)</li>
-            <li><strong>Time-weighted ripeness</strong> — recent confirms count exponentially more than old ones</li>
-            <li><strong>Fuzzy locations</strong> by default — coords rounded to ~110m to protect sensitive spots</li>
+            <li><strong>Layered open data</strong> — every listing is tagged with its <code>source</code>; the map renders each as a toggleable layer with license + attribution</li>
+            <li><strong>Idempotent seeds</strong> — species IDs are SHA-1 of latin name, listing IDs are SHA-1 of sourceId, so re-runs upsert instead of duplicating</li>
+            <li><strong>Two-phase ripeness</strong> — seed time: species season × current month; runtime: time-weighted average of recent user reports (half-life ~1.4 weeks)</li>
+            <li><strong>Fuzzy locations</strong> by default — user-submitted coords rounded to ~110&thinsp;m; open-data imports at ~11&thinsp;m (already public)</li>
           </ul>
 
           <h3 id="species">Add species to the catalog</h3>
-          <p>We ship ~85 edibles, covering worldwide fruits and nuts plus Sierra Nevada + California natives (manzanita, toyon, bay laurel, valley oak, sugar pine, etc.). Add more by editing <code>scripts/seed-species.ts</code> with accurate latin names, seasonality, and — critically — toxicity and look-alike warnings. Uncited species get reverted.</p>
+          <p>We ship ~85 edibles, covering worldwide fruits and nuts plus Sierra Nevada + California natives (manzanita, toyon, bay laurel, valley oak, sugar pine, etc.). Add more by editing <code>scripts/species-data.ts</code> — the single source of truth imported by both <code>seed-species</code> (pushes entities) and <code>seed-listings</code> (links imports + computes ripeness from season). Include accurate latin names, seasonality, and — critically — toxicity and look-alike warnings. Uncited species get reverted.</p>
 
           <h3 id="translate">Translate</h3>
           <p>i18n scaffolding lives in the <code>i18n</code> branch. Pick up any language — we'll review and merge.</p>
