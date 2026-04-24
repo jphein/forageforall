@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.5] — 2026-04-24
+
+Add pin flow fixes.
+
+- Auth gate now shows an explanatory dialog ("Sign in to publish — it's free…")
+  with Cancel / Sign in buttons instead of silently redirecting to the auth
+  screen. Users are no longer stranded wondering what happened.
+- After signing in and returning to the add flow, state (location, species,
+  ripeness, notes) is fully preserved so tapping "Publish pin" again works
+  without repeating the 3 steps.
+- Species search now matches on Latin name as well as common name — typing
+  "plantago" (or any genus/species name) surfaces the right species.
+- Community pins now have `source: "community"` and `kind` written directly
+  on the listing at creation time, so Browse kind filters and layer toggles
+  work for user-submitted pins (previously they relied on the joined species
+  entity and could be invisible to the "community" layer toggle).
+
 ## [0.1.4] — 2026-04-24
 
 - Browse and In Season (calendar) tabs: horizontal chip / month rows no

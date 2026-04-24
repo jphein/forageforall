@@ -31,21 +31,25 @@ export default function AddFlow() {
   const [coord, setCoord] = useState<{ lat: number; lng: number } | null>(null);
   const [speciesId, setSpeciesId] = useState<string | null>(null);
   const [speciesName, setSpeciesName] = useState<string>("");
+  const [speciesKind, setSpeciesKind] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [ripeness, setRipeness] = useState<Ripeness>(3);
   const [notes, setNotes] = useState("");
   const [access, setAccess] = useState({ public: true, permission: false, pesticide: false, gloves: false });
   const [submitting, setSubmitting] = useState(false);
 
-  const { data } = db.useQuery({
-    species: {
-      $: {
-        where: search.trim() ? { commonName: { $like: `%${search}%` } } : {},
-        limit: 40,
-      },
-    },
-  });
-  const species = (data?.species ?? []) as any[];
+  // Fetch the full catalog (~90 species) and filter client-side so that
+  // latin-name searches (e.g. "plantago") also surface the right species.
+  const { data } = db.useQuery({ species: { $: { limit: 200 } } });
+  const allSpecies = (data?.species ?? []) as any[];
+  const q = search.trim().toLowerCase();
+  const species = q
+    ? allSpecies.filter(
+        (s: any) =>
+          s.commonName?.toLowerCase().includes(q) ||
+          s.latinName?.toLowerCase().includes(q),
+      )
+    : allSpecies;
 
   React.useEffect(() => {
     if (location && !coord) setCoord(location);
@@ -54,7 +58,17 @@ export default function AddFlow() {
   const canNext = [!!coord, !!speciesId, true][step];
 
   const submit = async () => {
-    if (!user) return router.push("/auth");
+    if (!user) {
+      Alert.alert(
+        "Sign in to publish",
+        "Foragers keep the community honest. Sign in with your email — it's free and takes about 30 seconds.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Sign in", onPress: () => router.push("/auth") },
+        ],
+      );
+      return;
+    }
     if (!coord || !speciesId) return;
     setSubmitting(true);
     try {
@@ -68,6 +82,7 @@ export default function AddFlow() {
         initialRipeness: ripeness,
         fuzzy: true,
         userId: user.id,
+        kind: speciesKind ?? undefined,
       });
       router.replace(`/listing/${listingId}`);
     } catch (e: any) {
@@ -150,6 +165,7 @@ export default function AddFlow() {
               onPress={() => {
                 setSpeciesId(s.id);
                 setSpeciesName(s.commonName);
+                setSpeciesKind(s.kind ?? null);
               }}
               style={[
                 styles.speciesRow,

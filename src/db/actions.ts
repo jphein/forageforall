@@ -23,6 +23,7 @@ export type NewListingInput = {
   initialRipeness: Ripeness;
   fuzzy?: boolean;
   userId: string;
+  kind?: string;
 };
 
 export async function createListing(input: NewListingInput) {
@@ -49,6 +50,8 @@ export async function createListing(input: NewListingInput) {
         stillThereScore: 1,
         status: "active",
         createdAt: now,
+        source: "community",
+        ...(input.kind ? { kind: input.kind } : {}),
       })
       .link({ species: input.speciesId, createdBy: input.userId }),
 
