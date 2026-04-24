@@ -211,9 +211,10 @@ export default function MapScreen() {
       {/* Bottom sheet preview */}
       {selected ? (
         <SafeAreaView edges={["bottom"]} style={styles.sheet} pointerEvents="box-none">
-          <View style={{ paddingHorizontal: spacing.md }}>
+          <View style={styles.sheetInner}>
             <Pressable
               onPress={() => router.push(`/listing/${selected.id}`)}
+              style={{ flex: 1 }}
             >
               <ListingCard
                 listing={selected}
@@ -224,11 +225,20 @@ export default function MapScreen() {
                 }
               />
             </Pressable>
+            <Pressable
+              onPress={() => setSelectedId(null)}
+              hitSlop={12}
+              style={styles.sheetClose}
+              accessibilityLabel="Close pin preview"
+            >
+              <Ionicons name="close" size={18} color={palette.inkSoft} />
+            </Pressable>
           </View>
         </SafeAreaView>
       ) : null}
 
-      <LegendBar />
+      {/* Legend hides when a pin is selected so the detail card has room. */}
+      {selected ? null : <LegendBar />}
 
       <LayerSheet
         visible={layersOpen}
@@ -317,6 +327,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
+  },
+  sheetInner: {
+    paddingHorizontal: spacing.md,
+    position: "relative",
+  },
+  sheetClose: {
+    position: "absolute",
+    top: spacing.xs,
+    right: spacing.md + 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: palette.cream,
+    alignItems: "center",
+    justifyContent: "center",
+    ...shadow.card,
   },
   clusterBubble: {
     minWidth: 36,

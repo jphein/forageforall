@@ -57,10 +57,21 @@ export function ListingCard({
       </View>
 
       <View style={styles.body}>
-        <Text variant="title" numberOfLines={1}>{listing.title || species.commonName || "Find"}</Text>
-        <Text variant="caption" muted style={{ fontStyle: "italic" }} numberOfLines={1}>
-          {species.latinName ?? ""}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text variant="title" numberOfLines={1} style={{ flex: 1 }}>
+            {listing.title?.split(" — ")[0] || species.commonName || "Find"}
+          </Text>
+          {species.isToxic ? (
+            <View style={styles.toxicBadge}>
+              <Text style={styles.toxicText}>⚠ caution</Text>
+            </View>
+          ) : null}
+        </View>
+        {species.latinName ? (
+          <Text variant="caption" muted style={{ fontStyle: "italic" }} numberOfLines={1}>
+            {species.latinName}
+          </Text>
+        ) : null}
 
         <View style={styles.metaRow}>
           <Text variant="caption" soft>
@@ -83,11 +94,23 @@ export function ListingCard({
           ) : null}
         </View>
 
+        {species.description ? (
+          <Text variant="caption" soft numberOfLines={2} style={styles.descText}>
+            {species.description}
+          </Text>
+        ) : null}
+
+        {species.isToxic && Array.isArray(species.lookAlikes) && species.lookAlikes.length ? (
+          <Text variant="caption" style={styles.warnText} numberOfLines={2}>
+            ⚠ {species.lookAlikes[0]}
+          </Text>
+        ) : null}
+
         {sourceLayer ? (
           <View style={styles.sourceRow}>
             <View style={[styles.sourceDot, { backgroundColor: getSourceColor(sourceKey) }]} />
             <Text variant="caption" muted numberOfLines={1}>
-              via {sourceLayer.shortLabel}
+              via {sourceLayer.shortLabel} · tap for details
             </Text>
           </View>
         ) : null}
@@ -126,7 +149,29 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   body: { flex: 1, justifyContent: "center" },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   metaRow: { flexDirection: "row", alignItems: "center", marginTop: 4, flexWrap: "wrap" },
-  sourceRow: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 6 },
+  sourceRow: { flexDirection: "row", alignItems: "center", marginTop: 6, gap: 6 },
   sourceDot: { width: 8, height: 8, borderRadius: 4 },
+  descText: { marginTop: 6, lineHeight: 16 },
+  warnText: {
+    marginTop: 6,
+    color: palette.terra,
+    backgroundColor: "#FBE8DF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+    lineHeight: 15,
+  },
+  toxicBadge: {
+    backgroundColor: palette.terra,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+  toxicText: {
+    color: palette.cream,
+    fontSize: 11,
+    fontWeight: "700",
+  },
 });
