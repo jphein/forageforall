@@ -39,13 +39,16 @@ export function useListings(region: Region | null, filter: ListingFilter = {}) {
   if (boundedCells.length) where.geohash5 = { $in: boundedCells };
   if (filter.ripeNow) where.currentRipeness = { $gte: 3 };
 
+  // We don't order server-side: lastConfirmedAt is sparsely populated on
+  // open-data imports and InstantDB requires the field to be both indexed
+  // and typed for server-side ordering. The map clusters pins visually,
+  // so order has minimal visible impact; we sort client-side where it matters.
   const { data, isLoading, error } = db.useQuery(
     boundedCells.length
       ? {
           listings: {
             $: {
               where,
-              order: { lastConfirmedAt: "desc" },
               limit: 500,
             },
             species: {},
