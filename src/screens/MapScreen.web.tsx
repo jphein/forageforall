@@ -195,14 +195,24 @@ export default function MapScreen() {
 
       {/* Top filter bar */}
       <SafeAreaView edges={["top"]} style={styles.topWrap} pointerEvents="box-none">
-        <View style={styles.searchBar}>
-          <Pressable onPress={() => setLayersOpen(true)} hitSlop={10} style={{ marginRight: spacing.sm }}>
-            <Ionicons name="layers-outline" size={20} color={palette.bark} />
+        <View style={styles.topRow}>
+          <View style={[styles.searchBar, { flex: 1 }]}>
+            <Pressable onPress={() => setLayersOpen(true)} hitSlop={10} style={{ marginRight: spacing.sm }}>
+              <Ionicons name="layers-outline" size={20} color={palette.bark} />
+            </Pressable>
+            <Text variant="body" muted style={{ flex: 1 }}>
+              {listings.length} finds in view
+            </Text>
+            <MapStyleToggle value={mapStyle} onChange={setMapStyle} />
+          </View>
+          <Pressable
+            onPress={() => router.push("/add")}
+            style={[styles.addPill, shadow.card]}
+            accessibilityLabel="Add a find"
+          >
+            <Ionicons name="add" size={18} color={palette.cream} />
+            <Text style={styles.addPillLabel}>Add a find</Text>
           </Pressable>
-          <Text variant="body" muted style={{ flex: 1 }}>
-            {listings.length} finds in view
-          </Text>
-          <MapStyleToggle value={mapStyle} onChange={setMapStyle} />
         </View>
 
         <ScrollView
@@ -223,7 +233,8 @@ export default function MapScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {/* Locate-me button */}
+      {/* Locate-me button — bottom-left so it doesn't fight Google's
+          zoom controls + attribution on the right edge. */}
       {location ? (
         <Pressable
           onPress={recenterOnUser}
@@ -233,17 +244,6 @@ export default function MapScreen() {
           <Ionicons name="locate" size={20} color={palette.bark} />
         </Pressable>
       ) : null}
-
-      {/* Add FAB — "Add a find" reads better than a bare plus on web
-          where there's room for a label. */}
-      <Pressable
-        onPress={() => router.push("/add")}
-        style={[styles.fab, shadow.floating]}
-        accessibilityLabel="Add a find"
-      >
-        <Ionicons name="add" size={22} color={palette.cream} />
-        <Text style={styles.fabLabel}>Add a find</Text>
-      </Pressable>
 
       {/* Bottom preview card */}
       {selected ? (
@@ -318,18 +318,37 @@ const styles = StyleSheet.create({
     right: 0,
     pointerEvents: "box-none",
   } as any,
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+  },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.bgElevated,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     borderColor: colors.line,
     borderWidth: 1,
     ...shadow.card,
+  },
+  addPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    backgroundColor: palette.moss,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    borderRadius: radius.pill,
+  },
+  addPillLabel: {
+    color: palette.cream,
+    fontWeight: "600",
+    fontSize: 14,
   },
   chipScroller: { flexGrow: 0, flexShrink: 0 },
   chips: {
@@ -338,28 +357,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     alignItems: "center",
   },
-  fab: {
-    position: "absolute",
-    bottom: 100,
-    right: spacing.lg,
-    flexDirection: "row",
-    height: 48,
-    borderRadius: 24,
-    paddingHorizontal: spacing.md,
-    backgroundColor: palette.moss,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.xs,
-  },
-  fabLabel: {
-    color: palette.cream,
-    fontWeight: "600",
-    fontSize: 14,
-  },
   locate: {
     position: "absolute",
-    bottom: 168,
-    right: spacing.lg,
+    bottom: 100,
+    left: spacing.lg,
     width: 44,
     height: 44,
     borderRadius: 22,
