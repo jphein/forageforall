@@ -3,7 +3,7 @@
  * react-native-maps (which has no web support).
  */
 
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useRef } from "react";
 import { View, StyleSheet, Pressable, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -63,11 +63,23 @@ export default function MapScreen() {
 
   const { isLoaded } = useJsApiLoader({ googleMapsApiKey: MAPS_KEY });
 
-  // Center on user location once available
+  // Stable initial camera target. @react-google-maps/api re-applies
+  // `center`/`zoom` whenever those props change, so we must pass
+  // references that never change — otherwise every viewport update
+  // (via onIdle -> setRegion -> re-render) would snap the map back to
+  // the previous center and the user couldn't pan or zoom.
+  const initialCenter = useRef({
+    lat: DEFAULT_CENTER.lat,
+    lng: DEFAULT_CENTER.lng,
+  });
+  const hasCenteredOnUser = useRef(false);
+
+  // Center on user location once it arrives — imperative so we don't
+  // fight the user's gestures through controlled props.
   React.useEffect(() => {
-    if (location) {
-      setRegion((r) => ({ ...r, lat: location.lat, lng: location.lng }));
-      mapRef?.panTo({ lat: location.lat, lng: location.lng });
+    if (location && mapRef && !hasCenteredOnUser.current) {
+      mapRef.panTo({ lat: location.lat, lng: location.lng });
+      hasCenteredOnUser.current = true;
     }
   }, [location?.lat, location?.lng, mapRef]);
 
@@ -82,7 +94,10 @@ export default function MapScreen() {
     [listings, selectedId],
   );
 
-  const onBoundsChanged = useCallback(() => {
+  // onIdle fires once the map settles after a pan/zoom — mirrors
+  // MapView's onRegionChangeComplete and avoids the per-frame churn of
+  // onBoundsChanged.
+  const onIdle = useCallback(() => {
     if (!mapRef) return;
     const c = mapRef.getCenter();
     const b = mapRef.getBounds();
@@ -113,14 +128,15 @@ export default function MapScreen() {
       <View style={{ flex: 1 }}>
         <GoogleMap
           mapContainerStyle={{ width: "100%", height: "100%" }}
-          center={{ lat: region.lat, lng: region.lng }}
+          center={initialCenter.current}
           zoom={13}
           onLoad={setMapRef}
-          onBoundsChanged={onBoundsChanged}
+          onIdle={onIdle}
           options={{
             disableDefaultUI: true,
             zoomControl: true,
             clickableIcons: false,
+            gestureHandling: "greedy",
           }}
         >
           {listings.map((l: any) => {
