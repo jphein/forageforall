@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, TextInput, ScrollView, Alert } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, ScrollView, Alert, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -68,20 +68,28 @@ export default function AddFlow() {
 
   const submit = async () => {
     if (!user) {
-      Alert.alert(
-        "Sign in to publish",
-        "Foragers keep the community honest. Sign in with your email — it's free and takes about 30 seconds.",
-        [
+      // Alert.alert's multi-button prompt is not implemented on
+      // react-native-web, so fall back to window.confirm there.
+      const title = "Sign in to publish";
+      const body =
+        "Foragers keep the community honest. Sign in with your email — it's free and takes about 30 seconds.";
+      const goToAuth = () => {
+        setPendingSubmit(true);
+        router.push("/auth");
+      };
+      if (Platform.OS === "web") {
+        if (
+          typeof window !== "undefined" &&
+          window.confirm(`${title}\n\n${body}`)
+        ) {
+          goToAuth();
+        }
+      } else {
+        Alert.alert(title, body, [
           { text: "Cancel", style: "cancel" },
-          {
-            text: "Sign in",
-            onPress: () => {
-              setPendingSubmit(true);
-              router.push("/auth");
-            },
-          },
-        ],
-      );
+          { text: "Sign in", onPress: goToAuth },
+        ]);
+      }
       return;
     }
     if (!coord || !speciesId) return;

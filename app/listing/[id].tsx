@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { ScrollView, View, StyleSheet, Pressable, TextInput, Alert } from "react-native";
+import { ScrollView, View, StyleSheet, Pressable, TextInput, Alert, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -113,11 +113,29 @@ export default function ListingDetail() {
 
   const flag = () => {
     if (!user) return router.push("/auth");
+    const file = (reason: string) =>
+      flagListing({ listingId: listing.id, userId: user.id, reason });
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      // Alert.alert's multi-button prompt isn't implemented on RNW.
+      // Use window.prompt with a keyed list — clunky but works.
+      const choice = window.prompt(
+        "Flag this listing? Type one of:\n  1 — Private property\n  2 — Wrong species\n  3 — Dangerous",
+      );
+      const reasonByChoice: Record<string, string> = {
+        "1": "private_property",
+        "2": "wrong_species",
+        "3": "dangerous",
+      };
+      if (choice && reasonByChoice[choice.trim()]) {
+        file(reasonByChoice[choice.trim()]);
+      }
+      return;
+    }
     Alert.alert("Flag this listing?", "Choose a reason", [
       { text: "Cancel", style: "cancel" },
-      { text: "Private property", onPress: () => flagListing({ listingId: listing.id, userId: user.id, reason: "private_property" }) },
-      { text: "Wrong species", onPress: () => flagListing({ listingId: listing.id, userId: user.id, reason: "wrong_species" }) },
-      { text: "Dangerous", onPress: () => flagListing({ listingId: listing.id, userId: user.id, reason: "dangerous" }) },
+      { text: "Private property", onPress: () => file("private_property") },
+      { text: "Wrong species", onPress: () => file("wrong_species") },
+      { text: "Dangerous", onPress: () => file("dangerous") },
     ]);
   };
 
