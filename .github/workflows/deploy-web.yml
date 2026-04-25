@@ -45,6 +45,11 @@ jobs:
         run: |
           mkdir -p docs/app
           cp -r web-build/* docs/app/
+          # GH Pages serves a root-level 404.html whenever a path has no
+          # matching file. Point it at the exported SPA shell so deep links
+          # into dynamic routes (/app/listing/<id>) fall through to the
+          # client-side router instead of dying on a GH Pages 404 page.
+          cp web-build/index.html docs/404.html
 
       - uses: actions/configure-pages@v6
 
