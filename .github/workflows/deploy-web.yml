@@ -1,17 +1,12 @@
-name: Deploy Web App to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - 'docs/index.html'
-      - 'docs/og-image.png'
-      - 'docs/press/**'
-      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -36,13 +31,13 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Export web bundle
+      - name: Export web app
         env:
           EXPO_PUBLIC_GOOGLE_MAPS_WEB_KEY: ${{ secrets.GOOGLE_MAPS_WEB_KEY }}
           INSTANT_APP_ID: ${{ secrets.INSTANT_APP_ID }}
         run: npx expo export --platform web --output-dir web-build
 
-      - name: Merge into docs/
+      - name: Merge web app into docs/app/
         run: |
           mkdir -p docs/app
           cp -r web-build/* docs/app/

@@ -5,6 +5,7 @@ import type { ExpoConfig } from "expo/config";
  *
  * Before building you MUST set these env vars (see .env.example):
  *   GOOGLE_MAPS_IOS_KEY, GOOGLE_MAPS_ANDROID_KEY, INSTANT_APP_ID
+ *   EXPO_PUBLIC_GOOGLE_MAPS_WEB_KEY  (web only — HTTP-referrer restricted key)
  */
 const config: ExpoConfig = {
   name: "Forage for All",
