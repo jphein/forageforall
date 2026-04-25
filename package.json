@@ -22,6 +22,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",
     "@expo/vector-icons": "^14.0.2",
+    "@googlemaps/markerclusterer": "^2.6.2",
     "@instantdb/react": "^1.0.17",
     "@instantdb/react-native": "^0.17.0",
     "@react-google-maps/api": "^2.20.8",

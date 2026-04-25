@@ -3,11 +3,12 @@
  * react-native-maps (which has no web support).
  */
 
-import React, { useMemo, useState, useCallback, useRef } from "react";
+import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { View, StyleSheet, Pressable, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { GoogleMap, useJsApiLoader, Marker as GMarker, InfoWindow } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, InfoWindow } from "@react-google-maps/api";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Text } from "../components/Text";
@@ -18,6 +19,7 @@ import { useListings, Region } from "../hooks/useListings";
 import { useCurrentLocation } from "../hooks/useCurrentLocation";
 import { useSourceLayers } from "../hooks/useSourceLayers";
 import { MAP_STYLES, MapStyleKey } from "../config/mapStyles";
+import { getSourceColor } from "../config/sourceLayers";
 import { colors, palette, radius, shadow, spacing } from "../theme/tokens";
 import { distanceMeters } from "../lib/geo";
 
@@ -45,6 +47,23 @@ const KIND_GLYPH: Record<string, string> = {
   nut: "🌰", fig: "🫒", grape: "🍇", herb: "🌿", veg: "🥬",
   flower: "🌼", mushroom: "🍄",
 };
+
+// SVG pin icon with ripeness-colored body and source-colored stroke —
+// mirrors the native MapPin's visual language so web users see the
+// same ripeness gradient + source attribution at a glance.
+function pinSvgDataUrl(opts: { glyph: string; ripeness: number; source?: string | null }) {
+  const ring = palette.ripeness[Math.max(0, Math.min(4, Math.round(opts.ripeness)))];
+  const stroke = getSourceColor(opts.source);
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">` +
+    `<ellipse cx="18" cy="40" rx="6" ry="1.5" fill="#000" opacity="0.25"/>` +
+    `<path d="M18 1 C 9 1, 2 8, 2 17 C 2 27, 18 40, 18 40 C 18 40, 34 27, 34 17 C 34 8, 27 1, 18 1 Z" ` +
+    `fill="${ring}" stroke="${stroke}" stroke-width="2"/>` +
+    `<text x="18" y="22" font-size="15" text-anchor="middle" dominant-baseline="middle" ` +
+    `font-family="serif">${opts.glyph}</text>` +
+    `</svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
 
 export default function MapScreen() {
   const router = useRouter();
@@ -137,6 +156,59 @@ export default function MapScreen() {
     if ((mapRef.getZoom() ?? 0) < 14) mapRef.setZoom(15);
   }, [mapRef, location?.lat, location?.lng]);
 
+  // Marker click handler lives behind a ref so the clusterer effect
+  // below doesn't need selectedId in its deps — otherwise selecting
+  // a pin would tear down and rebuild every marker on the map.
+  const markerClickRef = useRef<(id: string) => void>(() => {});
+  markerClickRef.current = (id: string) =>
+    setSelectedId((prev) => (prev === id ? null : id));
+
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const clustererRef = useRef<MarkerClusterer | null>(null);
+
+  useEffect(() => {
+    if (!mapRef || !isLoaded) return;
+
+    // Tear down previous markers + clusterer — easier than diffing.
+    if (clustererRef.current) {
+      clustererRef.current.clearMarkers();
+    }
+    markersRef.current.forEach((m) => m.setMap(null));
+
+    const markers = listings.map((l: any) => {
+      const kind = l.kind ?? l.species?.kind ?? "herb";
+      const marker = new google.maps.Marker({
+        position: { lat: l.lat, lng: l.lng },
+        icon: {
+          url: pinSvgDataUrl({
+            glyph: KIND_GLYPH[kind] ?? "🌱",
+            ripeness: l.currentRipeness ?? 0,
+            source: l.source,
+          }),
+          scaledSize: new google.maps.Size(36, 44),
+          anchor: new google.maps.Point(18, 40),
+        },
+      });
+      marker.addListener("click", () => markerClickRef.current(l.id));
+      return marker;
+    });
+    markersRef.current = markers;
+
+    if (!clustererRef.current) {
+      clustererRef.current = new MarkerClusterer({ map: mapRef, markers });
+    } else {
+      clustererRef.current.addMarkers(markers);
+    }
+  }, [listings, mapRef, isLoaded]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      clustererRef.current?.clearMarkers();
+      markersRef.current.forEach((m) => m.setMap(null));
+    };
+  }, []);
+
   if (!isLoaded) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
@@ -156,17 +228,7 @@ export default function MapScreen() {
           onIdle={onIdle}
           options={mapOptions}
         >
-          {listings.map((l: any) => {
-            const glyph = KIND_GLYPH[l.kind ?? l.species?.kind ?? "herb"] ?? "🌱";
-            return (
-              <GMarker
-                key={l.id}
-                position={{ lat: l.lat, lng: l.lng }}
-                onClick={() => setSelectedId(l.id === selectedId ? null : l.id)}
-                label={{ text: glyph, fontSize: "18px", fontFamily: "serif" }}
-              />
-            );
-          })}
+          {/* Pins are managed imperatively via MarkerClusterer in an effect. */}
           {selected ? (
             <InfoWindow
               position={{ lat: selected.lat, lng: selected.lng }}
