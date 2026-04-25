@@ -12,3 +12,4 @@ android/
 .DS_Store
 *.tsbuildinfo
 zip-archive/
+.playwright-mcp/
