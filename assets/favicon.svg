@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#F4EDDC"/>
+  <!-- Leaf -->
+  <path d="M32 10 C 44 18, 50 30, 44 44 C 38 54, 24 54, 18 44 C 12 30, 20 18, 32 10 Z"
+        fill="#4F7A3A" />
+  <!-- Vein -->
+  <path d="M32 14 L 32 48" stroke="#E8F0D8" stroke-width="2" stroke-linecap="round"/>
+  <path d="M32 22 L 40 18" stroke="#E8F0D8" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M32 22 L 24 18" stroke="#E8F0D8" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M32 30 L 42 26" stroke="#E8F0D8" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M32 30 L 22 26" stroke="#E8F0D8" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M32 38 L 40 36" stroke="#E8F0D8" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M32 38 L 24 36" stroke="#E8F0D8" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

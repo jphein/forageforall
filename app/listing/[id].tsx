@@ -44,12 +44,39 @@ export default function ListingDetail() {
     return `Confirmed ${days}d ago`;
   }, [listing?.lastConfirmedAt]);
 
-  if (isLoading || !listing) {
+  if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <SafeAreaView edges={["top"]}>
           <ScreenHeader title="…" showBack />
         </SafeAreaView>
+      </View>
+    );
+  }
+  if (!listing) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <SafeAreaView edges={["top"]}>
+          <ScreenHeader title="Not found" showBack />
+        </SafeAreaView>
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: spacing.lg,
+            gap: spacing.md,
+          }}
+        >
+          <Text variant="title" style={{ fontSize: 20 }}>
+            This find is gone.
+          </Text>
+          <Text variant="body" muted style={{ textAlign: "center", maxWidth: 320 }}>
+            The pin you&apos;re looking for doesn&apos;t exist — it may have
+            been removed, or the link is wrong.
+          </Text>
+          <PrimaryButton label="Back to the map" onPress={() => router.replace("/")} />
+        </View>
       </View>
     );
   }

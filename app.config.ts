@@ -27,7 +27,7 @@ const config: ExpoConfig = {
     // Dynamic routes like /listing/[id] still fall through to 404.html.
     output: "static",
     bundler: "metro",
-    favicon: "./assets/icon.png",
+    favicon: "./assets/favicon.png",
   },
   ios: {
     bundleIdentifier: "org.forageforall.app",

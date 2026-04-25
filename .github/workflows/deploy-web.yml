@@ -45,11 +45,47 @@ jobs:
         run: |
           mkdir -p docs/app
           cp -r web-build/* docs/app/
-          # GH Pages serves a root-level 404.html whenever a path has no
-          # matching file. Point it at the exported SPA shell so deep links
-          # into dynamic routes (/app/listing/<id>) fall through to the
-          # client-side router instead of dying on a GH Pages 404 page.
-          cp web-build/index.html docs/404.html
+          # GH Pages serves a root-level 404.html for any unmatched path.
+          # We want that fallback to load the SPA *only* for paths under
+          # /forageforall/app/ — so dynamic routes like /app/listing/<id>
+          # render correctly. Typos anywhere else (e.g. /forageforall/foo)
+          # should still see a regular 404 page.
+          cat > docs/404.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>Page not found · Forage for All</title>
+              <script>
+                (function () {
+                  var APP_PREFIX = "/forageforall/app/";
+                  if (window.location.pathname.indexOf(APP_PREFIX) === 0) {
+                    // Hand the URL to the SPA verbatim. The exported
+                    // index.html is a full Expo Router bundle — it will
+                    // read window.location and render the matched route.
+                    fetch(APP_PREFIX, { cache: "no-store" })
+                      .then(function (r) { return r.text(); })
+                      .then(function (html) {
+                        document.open();
+                        document.write(html);
+                        document.close();
+                      });
+                  }
+                })();
+              </script>
+              <style>
+                body { font-family: system-ui, sans-serif; padding: 4rem 2rem; max-width: 640px; margin: 0 auto; color: #3E2E1F; background: #F4EDDC; }
+                h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+                a { color: #4F7A3A; }
+              </style>
+            </head>
+            <body>
+              <h1>Page not found</h1>
+              <p>That page doesn't exist. <a href="/forageforall/">Back to Forage for All</a>.</p>
+            </body>
+          </html>
+          EOF
 
       - uses: actions/configure-pages@v6
 
