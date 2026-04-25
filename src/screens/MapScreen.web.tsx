@@ -17,6 +17,7 @@ import { LayerSheet } from "../components/LayerSheet";
 import { useListings, Region } from "../hooks/useListings";
 import { useCurrentLocation } from "../hooks/useCurrentLocation";
 import { useSourceLayers } from "../hooks/useSourceLayers";
+import { MAP_STYLES, MapStyleKey } from "../config/mapStyles";
 import { colors, palette, radius, shadow, spacing } from "../theme/tokens";
 import { distanceMeters } from "../lib/geo";
 
@@ -59,6 +60,7 @@ export default function MapScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [layersOpen, setLayersOpen] = useState(false);
   const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
+  const [mapStyle, setMapStyle] = useState<MapStyleKey>("paper");
   const sourceLayers = useSourceLayers();
 
   const { isLoaded } = useJsApiLoader({ googleMapsApiKey: MAPS_KEY });
@@ -115,6 +117,26 @@ export default function MapScreen() {
   const toggleKind = (k: string) =>
     setActiveKinds((prev) => (prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]));
 
+  // Options: stable across renders unless mapStyle changes, so the
+  // library doesn't re-apply settings on every listings update.
+  const mapOptions = useMemo<google.maps.MapOptions>(
+    () => ({
+      disableDefaultUI: true,
+      zoomControl: true,
+      clickableIcons: false,
+      gestureHandling: "greedy",
+      styles: MAP_STYLES[mapStyle] ?? undefined,
+      mapTypeId: mapStyle === "satellite" ? "hybrid" : "roadmap",
+    }),
+    [mapStyle],
+  );
+
+  const recenterOnUser = useCallback(() => {
+    if (!mapRef || !location) return;
+    mapRef.panTo({ lat: location.lat, lng: location.lng });
+    if ((mapRef.getZoom() ?? 0) < 14) mapRef.setZoom(15);
+  }, [mapRef, location?.lat, location?.lng]);
+
   if (!isLoaded) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
@@ -132,12 +154,7 @@ export default function MapScreen() {
           zoom={13}
           onLoad={setMapRef}
           onIdle={onIdle}
-          options={{
-            disableDefaultUI: true,
-            zoomControl: true,
-            clickableIcons: false,
-            gestureHandling: "greedy",
-          }}
+          options={mapOptions}
         >
           {listings.map((l: any) => {
             const glyph = KIND_GLYPH[l.kind ?? l.species?.kind ?? "herb"] ?? "🌱";
@@ -185,6 +202,7 @@ export default function MapScreen() {
           <Text variant="body" muted style={{ flex: 1 }}>
             {listings.length} finds in view
           </Text>
+          <MapStyleToggle value={mapStyle} onChange={setMapStyle} />
         </View>
 
         <ScrollView
@@ -205,12 +223,26 @@ export default function MapScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {/* Add FAB */}
+      {/* Locate-me button */}
+      {location ? (
+        <Pressable
+          onPress={recenterOnUser}
+          style={[styles.locate, shadow.floating]}
+          accessibilityLabel="Center map on my location"
+        >
+          <Ionicons name="locate" size={20} color={palette.bark} />
+        </Pressable>
+      ) : null}
+
+      {/* Add FAB — "Add a find" reads better than a bare plus on web
+          where there's room for a label. */}
       <Pressable
         onPress={() => router.push("/add")}
         style={[styles.fab, shadow.floating]}
+        accessibilityLabel="Add a find"
       >
-        <Ionicons name="add" size={30} color={palette.cream} />
+        <Ionicons name="add" size={22} color={palette.cream} />
+        <Text style={styles.fabLabel}>Add a find</Text>
       </Pressable>
 
       {/* Bottom preview card */}
@@ -249,6 +281,35 @@ export default function MapScreen() {
   );
 }
 
+function MapStyleToggle({
+  value,
+  onChange,
+}: {
+  value: MapStyleKey;
+  onChange: (v: MapStyleKey) => void;
+}) {
+  const next: Record<MapStyleKey, MapStyleKey> = {
+    paper: "dark",
+    dark: "satellite",
+    satellite: "paper",
+  };
+  const icon =
+    value === "paper"
+      ? "map-outline"
+      : value === "dark"
+      ? "moon-outline"
+      : "earth-outline";
+  return (
+    <Pressable
+      onPress={() => onChange(next[value])}
+      hitSlop={10}
+      accessibilityLabel={`Switch map style (currently ${value})`}
+    >
+      <Ionicons name={icon as any} size={20} color={palette.bark} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   topWrap: {
     position: "absolute",
@@ -281,10 +342,30 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 100,
     right: spacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    flexDirection: "row",
+    height: 48,
+    borderRadius: 24,
+    paddingHorizontal: spacing.md,
     backgroundColor: palette.moss,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+  },
+  fabLabel: {
+    color: palette.cream,
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  locate: {
+    position: "absolute",
+    bottom: 168,
+    right: spacing.lg,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.bgElevated,
+    borderColor: colors.line,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
