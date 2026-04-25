@@ -8,6 +8,7 @@ import { View, StyleSheet, Pressable, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { GoogleMap, useJsApiLoader, InfoWindow } from "@react-google-maps/api";
+import type { Cluster, ClusterStats } from "@googlemaps/markerclusterer";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -61,6 +62,26 @@ function pinSvgDataUrl(opts: { glyph: string; ripeness: number; source?: string 
     `fill="${ring}" stroke="${stroke}" stroke-width="2"/>` +
     `<text x="18" y="22" font-size="15" text-anchor="middle" dominant-baseline="middle" ` +
     `font-family="serif">${opts.glyph}</text>` +
+    `</svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+// Cluster pin — same silhouette as a single pin, but scaled up with a
+// count badge and the cluster's average ripeness driving the body
+// color. Keeps the foraging visual language at zoomed-out levels.
+function clusterSvgDataUrl(opts: { count: number; glyph: string; ripeness: number }) {
+  const ring = palette.ripeness[Math.max(0, Math.min(4, Math.round(opts.ripeness)))];
+  const label = opts.count > 99 ? "99+" : String(opts.count);
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="56" viewBox="0 0 48 56">` +
+    `<ellipse cx="24" cy="52" rx="8" ry="2" fill="#000" opacity="0.28"/>` +
+    `<path d="M24 1 C 12 1, 2 10, 2 22 C 2 35, 24 52, 24 52 C 24 52, 46 35, 46 22 C 46 10, 36 1, 24 1 Z" ` +
+    `fill="${ring}" stroke="#3E2E1F" stroke-width="2"/>` +
+    `<text x="24" y="27" font-size="18" text-anchor="middle" dominant-baseline="middle" ` +
+    `font-family="serif">${opts.glyph}</text>` +
+    `<circle cx="38" cy="12" r="10" fill="#3E2E1F" stroke="#F4EDDC" stroke-width="1.5"/>` +
+    `<text x="38" y="13" font-size="10" font-weight="700" text-anchor="middle" ` +
+    `dominant-baseline="middle" fill="#F4EDDC" font-family="system-ui, sans-serif">${label}</text>` +
     `</svg>`;
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
@@ -177,25 +198,71 @@ export default function MapScreen() {
 
     const markers = listings.map((l: any) => {
       const kind = l.kind ?? l.species?.kind ?? "herb";
+      const ripeness = l.currentRipeness ?? 0;
       const marker = new google.maps.Marker({
         position: { lat: l.lat, lng: l.lng },
         icon: {
           url: pinSvgDataUrl({
             glyph: KIND_GLYPH[kind] ?? "🌱",
-            ripeness: l.currentRipeness ?? 0,
+            ripeness,
             source: l.source,
           }),
           scaledSize: new google.maps.Size(36, 44),
           anchor: new google.maps.Point(18, 40),
         },
       });
+      // Stash pin metadata on the marker so the cluster renderer can
+      // compute a dominant glyph + average ripeness without a second
+      // lookup through the listings array.
+      (marker as any).__forage = { kind, ripeness };
       marker.addListener("click", () => markerClickRef.current(l.id));
       return marker;
     });
     markersRef.current = markers;
 
+    const clusterRenderer = {
+      render(cluster: Cluster, _stats: ClusterStats, _map: google.maps.Map) {
+        const { count, position, markers: clusterMarkers = [] } = cluster;
+        const kindCounts = new Map<string, number>();
+        let ripenessSum = 0;
+        let ripenessN = 0;
+        for (const m of clusterMarkers) {
+          const meta = (m as any).__forage as { kind?: string; ripeness?: number } | undefined;
+          const k = meta?.kind ?? "herb";
+          kindCounts.set(k, (kindCounts.get(k) ?? 0) + 1);
+          if (typeof meta?.ripeness === "number") {
+            ripenessSum += meta.ripeness;
+            ripenessN += 1;
+          }
+        }
+        let dominant = "herb";
+        let max = 0;
+        for (const [k, c] of kindCounts) {
+          if (c > max) { dominant = k; max = c; }
+        }
+        const avgRipeness = ripenessN ? ripenessSum / ripenessN : 3;
+        return new google.maps.Marker({
+          position,
+          icon: {
+            url: clusterSvgDataUrl({
+              count,
+              glyph: KIND_GLYPH[dominant] ?? "🌱",
+              ripeness: avgRipeness,
+            }),
+            scaledSize: new google.maps.Size(48, 56),
+            anchor: new google.maps.Point(24, 52),
+          },
+          zIndex: 1000 + count,
+        });
+      },
+    };
+
     if (!clustererRef.current) {
-      clustererRef.current = new MarkerClusterer({ map: mapRef, markers });
+      clustererRef.current = new MarkerClusterer({
+        map: mapRef,
+        markers,
+        renderer: clusterRenderer,
+      });
     } else {
       clustererRef.current.addMarkers(markers);
     }
