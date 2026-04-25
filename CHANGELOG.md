@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.1.5] — 2026-04-24
 
-Add pin flow fixes.
+Add pin flow fixes + map pin emoji clipping fix.
 
 - Auth gate now shows an explanatory dialog ("Sign in to publish — it's free…")
   with Cancel / Sign in buttons instead of silently redirecting to the auth
@@ -22,6 +22,11 @@ Add pin flow fixes.
   on the listing at creation time, so Browse kind filters and layer toggles
   work for user-submitted pins (previously they relied on the joined species
   entity and could be invisible to the "community" layer toggle).
+- Map pin emoji (🍎 🌿 🍄 etc.) no longer get clipped at the top. Root
+  cause: tall emoji ascenders (🍎's leaf, 🌰's cap) overflowed the top of
+  the rasterised marker bitmap. Fix: 6 px of `paddingTop` on the pin wrap
+  gives ascenders headroom; `lineHeight` set explicitly to prevent Android
+  text-layout inflation from shifting glyphs off-centre.
 
 ## [0.1.4] — 2026-04-24
 

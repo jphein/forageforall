@@ -42,11 +42,13 @@ export function MapPin({
   const stemColor = sourceColor ?? palette.bark;
   return (
     <View style={[styles.wrap, shadow.floating]}>
-      <View style={{ width: s, height: s, alignItems: "center", justifyContent: "center" }}>
+      {/* paddingTop gives emoji ascenders (leaf on 🍎, etc.) room above the
+          circle so they aren't clipped when the marker is rasterized. */}
+      <View style={{ width: s, height: s, alignItems: "center", justifyContent: "center", overflow: "visible" }}>
         <View style={StyleSheet.absoluteFill}>
           <RipenessRing size={s} ripeness={ripeness} />
         </View>
-        <Text style={{ fontSize: s * 0.45 }}>{glyph}</Text>
+        <Text style={{ fontSize: s * 0.43, lineHeight: s * 0.5 }}>{glyph}</Text>
       </View>
       <View
         style={[
@@ -61,6 +63,7 @@ export function MapPin({
 const styles = StyleSheet.create({
   wrap: {
     alignItems: "center",
+    paddingTop: 6,   // headroom so emoji ascenders aren't clipped at top
   },
   stem: {
     marginTop: -2,
