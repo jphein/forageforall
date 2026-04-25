@@ -86,6 +86,13 @@ const config: ExpoConfig = {
       projectId: "19ec7145-38b0-4627-bf42-7ae7332d44e8",
     },
   },
+  experiments: {
+    // GitHub Pages serves the web bundle at /forageforall/app/, so every
+    // static asset URL in index.html needs to be prefixed with that path.
+    // Overridable at build time — `expo start --web` doesn't need it, and
+    // a custom deploy target (Vercel, etc.) can pass its own value.
+    baseUrl: process.env.EXPO_BASE_URL ?? "",
+  },
 };
 
 export default config;

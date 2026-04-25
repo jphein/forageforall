@@ -35,6 +35,10 @@ jobs:
         env:
           EXPO_PUBLIC_GOOGLE_MAPS_WEB_KEY: ${{ secrets.GOOGLE_MAPS_WEB_KEY }}
           INSTANT_APP_ID: ${{ secrets.INSTANT_APP_ID }}
+          # GitHub Pages serves this repo at /forageforall/ and we stash
+          # the Expo bundle under /app/, so every asset URL in index.html
+          # needs to be prefixed with the full subpath.
+          EXPO_BASE_URL: /forageforall/app
         run: npx expo export --platform web --output-dir web-build
 
       - name: Merge web app into docs/app/
