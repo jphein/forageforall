@@ -37,6 +37,7 @@ export default function AddFlow() {
   const [notes, setNotes] = useState("");
   const [access, setAccess] = useState({ public: true, permission: false, pesticide: false, gloves: false });
   const [submitting, setSubmitting] = useState(false);
+  const [pendingSubmit, setPendingSubmit] = useState(false);
 
   // Fetch the full catalog (~90 species) and filter client-side so that
   // latin-name searches (e.g. "plantago") also surface the right species.
@@ -55,6 +56,15 @@ export default function AddFlow() {
     if (location && !coord) setCoord(location);
   }, [location?.lat, location?.lng]);
 
+  // Auto-submit after the user returns from the auth screen having signed in.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  React.useEffect(() => {
+    if (user && pendingSubmit && !submitting) {
+      setPendingSubmit(false);
+      submit();
+    }
+  }, [user?.id, pendingSubmit]); // intentional: submit identity changes each render
+
   const canNext = [!!coord, !!speciesId, true][step];
 
   const submit = async () => {
@@ -64,7 +74,13 @@ export default function AddFlow() {
         "Foragers keep the community honest. Sign in with your email — it's free and takes about 30 seconds.",
         [
           { text: "Cancel", style: "cancel" },
-          { text: "Sign in", onPress: () => router.push("/auth") },
+          {
+            text: "Sign in",
+            onPress: () => {
+              setPendingSubmit(true);
+              router.push("/auth");
+            },
+          },
         ],
       );
       return;

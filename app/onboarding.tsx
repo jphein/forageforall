@@ -8,8 +8,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { Text } from "../src/components/Text";
-import { PrimaryButton, SecondaryButton } from "../src/components/Button";
-import { colors, palette, radius, spacing } from "../src/theme/tokens";
+import { PrimaryButton } from "../src/components/Button";
+import { colors, palette, spacing } from "../src/theme/tokens";
 import { markOnboarded } from "./_layout";
 
 const { width } = Dimensions.get("window");

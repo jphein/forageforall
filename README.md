@@ -11,8 +11,9 @@ Drop a pin. Share what's ripe. Eat from your own neighborhood.
 [![Powered by InstantDB](https://img.shields.io/badge/Realtime-InstantDB-3E2E1F.svg?style=flat-square)](https://instantdb.com)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-E8A838.svg?style=flat-square)](./CONTRIBUTING.md)
 [![Platform](https://img.shields.io/badge/iOS%20%7C%20Android-supported-6B5440.svg?style=flat-square)](#install)
+[![Web](https://img.shields.io/badge/Web-live-4A7C2E.svg?style=flat-square)](https://jphein.github.io/forageforall/app/)
 
-[**Website**](https://jphein.github.io/forageforall/) · [**Docs**](./docs) · [**Roadmap**](./ROADMAP.md) · [**Ethics**](./FORAGING_ETHICS.md)
+[**Web app**](https://jphein.github.io/forageforall/app/) · [**Website**](https://jphein.github.io/forageforall/) · [**Docs**](./docs) · [**Roadmap**](./ROADMAP.md) · [**Ethics**](./FORAGING_ETHICS.md)
 
 </div>
 
@@ -40,6 +41,10 @@ Billions of pounds of fruit fall to sidewalks every year while people buy the sa
 ---
 
 ## Install
+
+### Try it now (Web)
+
+Open **[jphein.github.io/forageforall/app/](https://jphein.github.io/forageforall/app/)** in any browser. No install, no account required to browse the map.
 
 ### Try it now (Android)
 
@@ -85,6 +90,7 @@ Full walkthrough: [`docs/SETUP.md`](./docs/SETUP.md)
 | Routing | [Expo Router v3](https://docs.expo.dev/router/introduction/) | File-based routes — a file in `app/` is a screen |
 | Backend | [InstantDB](https://instantdb.com) | Realtime sync + auth + permissions, no custom server |
 | Maps | [react-native-maps](https://github.com/react-native-maps/react-native-maps) + Google Maps SDK | Custom paper-textured style |
+| Web maps | [@react-google-maps/api](https://github.com/visgl/react-google-maps) | Aliased for web via metro.config.js — same API keys |
 | Language | TypeScript (strict) | Required throughout — no `any` escapes |
 
 **No custom backend.** InstantDB handles auth, realtime sync, and access control. This keeps the app deployable by a single volunteer.
@@ -120,6 +126,7 @@ First run of the aggregator seeded **3,603 edible-plant pins for Nevada County, 
 forageforall/
 ├── app/                        # Expo Router screens (file = route)
 │   ├── (tabs)/                 # Map, Browse, In Season, Profile tabs
+│   │   ├── index.web.tsx        # Web map screen (@react-google-maps/api)
 │   ├── listing/[id].tsx        # Pin detail sheet
 │   ├── add.tsx                 # Add-pin flow
 │   ├── auth.tsx                # Magic-link sign in
@@ -130,6 +137,7 @@ forageforall/
 │   │   ├── mapStyles.ts        # Paper / Dark / Satellite custom Google Maps styles
 │   │   └── sourceLayers.ts     # Registry of open-data sources + attribution
 │   ├── db/
+│   │   ├── client.web.ts           # Web InstantDB client (@instantdb/react, Metro .web.ts resolution)
 │   │   └── schema.ts           # InstantDB schema (source of truth)
 │   ├── hooks/
 │   │   ├── useListings.ts      # Viewport-aware geohash query with layer filtering
@@ -152,7 +160,8 @@ forageforall/
 ├── instant.schema.ts           # Re-exports src/db/schema for the Instant CLI
 ├── instant.perms.ts            # Row-level permissions for InstantDB
 ├── app.config.ts               # Expo config — reads env vars for keys + IDs
-└── eas.json                    # EAS build profiles (preview + production)
+├── eas.json                    # EAS build profiles (preview + production)
+└── metro.config.js             # Aliases @instantdb/react-native → @instantdb/react on web
 ```
 
 ---

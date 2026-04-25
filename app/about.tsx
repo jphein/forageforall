@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { ScrollView, View, StyleSheet, Linking, Pressable } from "react-native";
+import { ScrollView, View, StyleSheet, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 

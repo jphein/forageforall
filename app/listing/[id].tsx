@@ -217,7 +217,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function AccessRow({ label, ok, warn, danger, neutral, flag }: any) {
+function AccessRow({ label, ok, warn, danger }: any) {
   const color = ok ? palette.moss : warn ? palette.sun : danger ? palette.terra : palette.bark;
   const icon = ok ? "checkmark-circle" : warn ? "alert-circle" : danger ? "warning" : "information-circle-outline";
   return (
