@@ -21,6 +21,14 @@ const config: ExpoConfig = {
     resizeMode: "contain",
     backgroundColor: "#F4EDDC",
   },
+  web: {
+    // Prerender every static route (browse.html, calendar.html, etc.)
+    // so GitHub Pages can serve direct hits without the SPA 404 trick.
+    // Dynamic routes like /listing/[id] still fall through to 404.html.
+    output: "static",
+    bundler: "metro",
+    favicon: "./assets/icon.png",
+  },
   ios: {
     bundleIdentifier: "org.forageforall.app",
     supportsTablet: true,
