@@ -6,7 +6,6 @@ import React, { useState } from "react";
 import { View, StyleSheet, Pressable, TextInput, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Text } from "../src/components/Text";
@@ -14,11 +13,11 @@ import { Chip } from "../src/components/Chip";
 import { RipenessRing } from "../src/components/RipenessRing";
 import { PrimaryButton, SecondaryButton } from "../src/components/Button";
 import { ScreenHeader } from "../src/components/ScreenHeader";
+import { PinMap } from "../src/components/PinMap";
 import { useCurrentLocation } from "../src/hooks/useCurrentLocation";
 import { useAuthedProfile } from "../src/hooks/useAuthedProfile";
 import { db } from "../src/db/client";
 import { createListing } from "../src/db/actions";
-import { FORAGE_PAPER_STYLE } from "../src/config/mapStyles";
 import { colors, palette, radius, spacing, shadow } from "../src/theme/tokens";
 import { RIPENESS_LABELS, Ripeness } from "../src/lib/ripeness";
 
@@ -124,37 +123,14 @@ export default function AddFlow() {
 
       {step === 0 ? (
         <View style={{ flex: 1 }}>
-          <MapView
-            provider={PROVIDER_GOOGLE}
-            style={{ flex: 1 }}
-            customMapStyle={FORAGE_PAPER_STYLE}
-            initialRegion={{
-              latitude: location?.lat ?? 37.7749,
-              longitude: location?.lng ?? -122.4194,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
+          <PinMap
+            coord={coord}
+            onCoordChange={setCoord}
+            initialCenter={{
+              lat: location?.lat ?? 37.7749,
+              lng: location?.lng ?? -122.4194,
             }}
-            onPress={(e) =>
-              setCoord({
-                lat: e.nativeEvent.coordinate.latitude,
-                lng: e.nativeEvent.coordinate.longitude,
-              })
-            }
-            showsUserLocation
-          >
-            {coord ? (
-              <Marker
-                coordinate={{ latitude: coord.lat, longitude: coord.lng }}
-                draggable
-                onDragEnd={(e) =>
-                  setCoord({
-                    lat: e.nativeEvent.coordinate.latitude,
-                    lng: e.nativeEvent.coordinate.longitude,
-                  })
-                }
-              />
-            ) : null}
-          </MapView>
+          />
           <View style={styles.hint}>
             <Ionicons name="hand-left-outline" size={18} color={palette.bark} />
             <Text variant="caption" soft style={{ marginLeft: 8 }}>

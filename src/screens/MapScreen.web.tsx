@@ -10,15 +10,15 @@ import { useRouter } from "expo-router";
 import { GoogleMap, useJsApiLoader, Marker as GMarker, InfoWindow } from "@react-google-maps/api";
 import { Ionicons } from "@expo/vector-icons";
 
-import { Text } from "../../src/components/Text";
-import { Chip } from "../../src/components/Chip";
-import { ListingCard } from "../../src/components/ListingCard";
-import { LayerSheet } from "../../src/components/LayerSheet";
-import { useListings, Region } from "../../src/hooks/useListings";
-import { useCurrentLocation } from "../../src/hooks/useCurrentLocation";
-import { useSourceLayers } from "../../src/hooks/useSourceLayers";
-import { colors, palette, radius, shadow, spacing } from "../../src/theme/tokens";
-import { distanceMeters } from "../../src/lib/geo";
+import { Text } from "../components/Text";
+import { Chip } from "../components/Chip";
+import { ListingCard } from "../components/ListingCard";
+import { LayerSheet } from "../components/LayerSheet";
+import { useListings, Region } from "../hooks/useListings";
+import { useCurrentLocation } from "../hooks/useCurrentLocation";
+import { useSourceLayers } from "../hooks/useSourceLayers";
+import { colors, palette, radius, shadow, spacing } from "../theme/tokens";
+import { distanceMeters } from "../lib/geo";
 
 const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_WEB_KEY ?? "";
 
